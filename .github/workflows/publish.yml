@@ -3,6 +3,12 @@ name: Release
 on:
   push:
     branches: [main]
+  # Re-publish an existing release tag if the automatic publish failed.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish to npm, for example v0.2.0
+        required: true
 
 concurrency:
   group: release
@@ -18,33 +24,24 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
+      major: ${{ steps.release.outputs.major }}
     steps:
       - uses: googleapis/release-please-action@v5
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Move the floating major tag (v0, v1, ...) so `uses: ponomarenko/ctxmedic@v0` gets the latest action.
-      - uses: actions/checkout@v7
-        if: steps.release.outputs.release_created
-      - name: Move the major tag
-        if: steps.release.outputs.release_created
-        env:
-          MAJOR: v${{ steps.release.outputs.major }}
-          TAG: ${{ steps.release.outputs.tag_name }}
-        run: |
-          git tag -f "$MAJOR" "$TAG"
-          git push -f origin "$MAJOR"
-
   publish:
     needs: release
-    if: needs.release.outputs.release_created
+    if: needs.release.outputs.release_created || inputs.tag
     runs-on: ubuntu-latest
     permissions:
       id-token: write # npm trusted publishing (OIDC) and provenance
       contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.sha }}
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -59,3 +56,19 @@ jobs:
         run: |
           pnpm pack
           npm publish ctxmedic-*.tgz --provenance --access public
+
+  # Move the floating major tag (v0, v1, ...) so `uses: ponomarenko/ctxmedic@v0` gets the latest action.
+  major-tag:
+    needs: release
+    if: needs.release.outputs.release_created
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Move the major tag
+        env:
+          MAJOR: v${{ needs.release.outputs.major }}
+          TAG: ${{ needs.release.outputs.tag_name }}
+        run: |
+          git fetch --depth=1 origin "refs/tags/$TAG:refs/tags/$TAG" # checkout fetches no tags
+          git tag -f "$MAJOR" "$TAG"
+          git push -f origin "$MAJOR"
