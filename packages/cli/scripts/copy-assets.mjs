@@ -7,4 +7,4 @@ const ui = here("../../ui/dist");
 rmSync(here("../public"), { recursive: true, force: true });
 if (existsSync(ui)) cpSync(ui, here("../public"), { recursive: true });
 else console.warn("[ctxmedic] packages/ui/dist missing: build the UI first");
-for (const f of ["LICENSE", "NOTICE"]) cpSync(here(`../../../${f}`), here(`../${f}`));
+for (const f of ["LICENSE", "NOTICE", "README.md"]) cpSync(here(`../../../${f}`), here(`../${f}`));
