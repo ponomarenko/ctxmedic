@@ -1,0 +1,7 @@
+node_modules/
+dist/
+packages/cli/public/
+*.tgz
+.ctxmedic/
+coverage/
+.DS_Store

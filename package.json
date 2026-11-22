@@ -1,11 +1,23 @@
 {
-  "name": "ctxmedic",
-  "version": "0.0.0",
-  "description": "The context medic for your AI coding setup: checkup, treat, savings. Work in progress.",
+  "name": "ctxmedic-monorepo",
+  "private": true,
+  "type": "module",
   "license": "FSL-1.1-MIT",
-  "author": "ponomarenko",
-  "repository": { "type": "git", "url": "git+https://github.com/ponomarenko/ctxmedic.git" },
-  "homepage": "https://github.com/ponomarenko/ctxmedic",
-  "keywords": ["ai", "claude-code", "cursor", "mcp", "linter", "finops", "tokens"],
-  "files": ["README.md"]
+  "author": "Vitaliy Ponomarenko <https://github.com/ponomarenko>",
+  "packageManager": "pnpm@12.21.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r --workspace-concurrency=1 run build",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "@types/picomatch": "^4.0.3",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
 }

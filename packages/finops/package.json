@@ -1,0 +1,15 @@
+{
+  "name": "@ctxmedic/finops",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "FSL-1.1-MIT",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@ctxmedic/core": "workspace:*",
+    "@ctxmedic/harnesses": "workspace:*",
+    "zod": "^3.24.1",
+    "picomatch": "^4.0.2"
+  }
+}

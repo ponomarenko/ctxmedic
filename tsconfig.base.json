@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@ctxmedic/core": ["packages/core/src/index.ts"],
+      "@ctxmedic/harnesses": ["packages/harnesses/src/index.ts"],
+      "@ctxmedic/finops": ["packages/finops/src/index.ts"],
+      "@ctxmedic/clinical": ["packages/clinical/src/index.ts"],
+      "@ctxmedic/server": ["packages/server/src/index.ts"]
+    }
+  }
+}
