@@ -110,13 +110,37 @@ their severity or thresholds, or ignore paths, add `ctxmedic.config.json`:
 
 To silence a rule for one Markdown file: `<!-- ctxmedic-disable WARN_CONTEXT_BLOAT -- reason -->`.
 
-## Privacy
+## What ctxmedic reads and writes
 
-- No telemetry. No network calls, except `consult --ai`, which asks before it
-  sends anything and redacts secrets first.
-- Session logs are read from `~/.claude/projects`, `~/.codex/sessions` and
-  `~/.cursor/projects`. Parsed totals are cached in `~/.ctxmedic/cache.json`.
-- The UI server binds to `127.0.0.1` and requires a per-run token for writes.
+ctxmedic is read-only until you approve a fix. Nothing is uploaded: no
+telemetry, no update checks.
+
+**Reads**
+- Project AI configs: `CLAUDE.md`, `AGENTS.md`, `.cursor/rules`, `.windsurfrules`,
+  `.clinerules`, Copilot instructions, skills, `.mcp.json` and similar
+  (full list per tool in [`packages/harnesses`](packages/harnesses/src/index.ts)).
+- Global configs in your home folder, such as `~/.claude/CLAUDE.md` and
+  `~/.claude.json`. Skip them with `--no-global`.
+- Local session logs, for the cost report only: `~/.claude/projects`,
+  `~/.codex/sessions`, `~/.cursor/projects`. Only token counts and model names are
+  kept; prompts are not stored. Skip them with `--no-finops`.
+
+**Writes**
+- `~/.ctxmedic/`: visit history (for trends) and a cache of parsed log totals.
+- `<project>/.ctxmedic/backups/`: a copy of every file before a fix changes it,
+  so `ctxmedic restore` can undo it. Fixes ask first and refuse to touch files
+  with uncommitted changes (`--force` overrides) or outside the project folder
+  (`--global` allows your home-folder configs).
+
+**Network**
+- Only `consult --ai`, which you run yourself. It replaces secrets with
+  `[REDACTED]`, then sends your instruction files either to a local Ollama or,
+  after you confirm, to Anthropic or OpenAI with your own key.
+- The UI server (`ctxmedic ui`) listens on `127.0.0.1` only and requires a
+  per-run token for writes.
+
+Secrets found in configs are always masked in output. To verify that the npm
+package was built from this repo by CI, run `npm audit signatures`.
 
 ## Development
 

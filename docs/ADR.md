@@ -180,3 +180,11 @@ Known limits: `FIN_*` detectors take no options and have no `meta` yet (they
 are functions in `finops`, not `Rule` objects); disables are per file, not per
 line; adding or removing an inline disable comment changes the score without
 starting a new trend, like any other edit to the files.
+
+## ADR-021 No Anthropic SDK
+`consult --ai` calls the Anthropic Messages API with `fetch`, like the OpenAI
+and Ollama paths. The SDK was a runtime dependency of every install for one
+optional, opt-in call; `optionalDependencies` would not help, because npm
+installs them by default. `ANTHROPIC_BASE_URL` still works. The UI typecheck
+now lists `node` types explicitly: it imports types from `@ctxmedic/clinical`,
+and Node types used to arrive only through the SDK's declarations.

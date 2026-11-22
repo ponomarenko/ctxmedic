@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { examine, redactSecrets } from "@ctxmedic/core";
 import { harnesses } from "@ctxmedic/harnesses";
 import type { ClinicalReport } from "./schema.js";
@@ -53,15 +52,25 @@ export async function askAi(provider: AiProvider, prompt: string): Promise<strin
     return ((await r.json()) as { message?: { content?: string } }).message?.content ?? "";
   }
   if (provider === "anthropic") {
-    const client = new Anthropic();
-    const res = await client.messages.create({
-      model: process.env.CTXMEDIC_AI_MODEL ?? "claude-opus-5-5",
-      max_tokens: 16000,
-      system: SYSTEM,
-      messages: [{ role: "user", content: prompt }],
+    // Plain fetch, not the SDK: one call does not justify a dependency every `npx ctxmedic` user installs.
+    const r = await fetch(`${process.env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com"}/v1/messages`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: process.env.CTXMEDIC_AI_MODEL ?? "claude-opus-5-5",
+        max_tokens: 16000,
+        system: SYSTEM,
+        messages: [{ role: "user", content: prompt }],
+      }),
     });
+    if (!r.ok) throw new Error(`Anthropic: HTTP ${r.status}`);
+    const res = (await r.json()) as { stop_reason?: string; content?: { type: string; text?: string }[] };
     if (res.stop_reason === "refusal") return "The model declined to review this configuration.";
-    return res.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("\n");
+    return (res.content ?? []).flatMap((b) => (b.type === "text" && b.text ? [b.text] : [])).join("\n");
   }
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",

@@ -1,9 +1,10 @@
 import fs from "node:fs";
+import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Finding } from "@ctxmedic/core";
-import { checkup, DEFAULT_SCAN, diagnose, healthScore, loadHistory, resolveLang, scanSettings, treat } from "@ctxmedic/clinical";
+import { askAi, checkup, DEFAULT_SCAN, diagnose, healthScore, loadHistory, resolveLang, scanSettings, treat } from "@ctxmedic/clinical";
 
 const f = (ruleId: Finding["ruleId"], severity: Finding["severity"], extra: Partial<Finding> = {}): Finding => ({ ruleId, severity, message: ruleId, files: [], data: {}, ...extra });
 
@@ -82,5 +83,34 @@ describe("history compares like with like", () => {
     expect(loadHistory(root)[0]!.scan).toEqual(DEFAULT_SCAN);
     expect((await checkup({ root, lang: "en" })).previous?.healthScore).toBe(50);
     expect((await checkup({ root, lang: "en", global: false })).previous).toBeNull();
+  });
+});
+
+describe("consult --ai", () => {
+  it("calls the Anthropic Messages API without the SDK", async () => {
+    let seen: { url?: string; headers?: http.IncomingHttpHeaders; body?: any } = {};
+    const server = http.createServer((req, res) => {
+      let raw = "";
+      req.on("data", (c) => (raw += c));
+      req.on("end", () => {
+        seen = { url: req.url, headers: req.headers, body: JSON.parse(raw) };
+        res.setHeader("content-type", "application/json");
+        res.end(JSON.stringify({ stop_reason: "end_turn", content: [{ type: "text", text: "a" }, { type: "tool_use" }, { type: "text", text: "b" }] }));
+      });
+    });
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+    const env = { ...process.env };
+    process.env.ANTHROPIC_BASE_URL = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+    process.env.ANTHROPIC_API_KEY = "test-key";
+    try {
+      expect(await askAi("anthropic", "hi")).toBe("a\nb");
+      expect(seen.url).toBe("/v1/messages");
+      expect(seen.headers?.["x-api-key"]).toBe("test-key");
+      expect(seen.headers?.["anthropic-version"]).toBe("2023-06-01");
+      expect(seen.body.messages).toEqual([{ role: "user", content: "hi" }]);
+    } finally {
+      process.env = env;
+      server.close();
+    }
   });
 });
