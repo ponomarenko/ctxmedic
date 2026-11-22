@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/ponomarenko/ctxmedic/compare/v0.2.3...v0.2.4) (2026-11-22)
+
+
+### Bug Fixes
+
+* linear-time secret scan and escaped Action summary cells ([#48](https://github.com/ponomarenko/ctxmedic/issues/48)) ([ab1d16e](https://github.com/ponomarenko/ctxmedic/commit/ab1d16e136e87a7dc3ccfcc0e059b81a40260928))
+
 ## [0.2.3](https://github.com/ponomarenko/ctxmedic/compare/v0.2.2...v0.2.3) (2026-11-22)
 
 
