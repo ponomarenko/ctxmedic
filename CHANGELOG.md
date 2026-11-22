@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.2.0](https://github.com/ponomarenko/ctxmedic/compare/v0.1.0...v0.2.0) (2026-11-22)
+
+
+### Features
+
+* add a GitHub Action CI gate ([#21](https://github.com/ponomarenko/ctxmedic/issues/21)) ([eef5376](https://github.com/ponomarenko/ctxmedic/commit/eef5376219c9b55587b25734de39cdae84327ab8)), closes [#12](https://github.com/ponomarenko/ctxmedic/issues/12)
+* add ctxmedic restore to undo fixes from backups ([#19](https://github.com/ponomarenko/ctxmedic/issues/19)) ([34c14df](https://github.com/ponomarenko/ctxmedic/commit/34c14df7a39e029f90f602a8e9bf309523d6097c)), closes [#4](https://github.com/ponomarenko/ctxmedic/issues/4)
+* measure real MCP schema sizes for FIN_UNUSED_MCP ([#22](https://github.com/ponomarenko/ctxmedic/issues/22)) ([88a2314](https://github.com/ponomarenko/ctxmedic/commit/88a23146e6096d5aa8a965f782ac1f552cfc7b3c)), closes [#5](https://github.com/ponomarenko/ctxmedic/issues/5)
+
+
+### Bug Fixes
+
+* compare history only between visits with the same scan options ([#20](https://github.com/ponomarenko/ctxmedic/issues/20)) ([7ddd1ca](https://github.com/ponomarenko/ctxmedic/commit/7ddd1cac456dc451b155eca61fdb97781f987a7c)), closes [#7](https://github.com/ponomarenko/ctxmedic/issues/7)
+
+
+### Tests
+
+* cover the CLI and the local API server ([#18](https://github.com/ponomarenko/ctxmedic/issues/18)) ([9c84692](https://github.com/ponomarenko/ctxmedic/commit/9c84692aef623fb08e55c974bd069f08e330b545)), closes [#8](https://github.com/ponomarenko/ctxmedic/issues/8)
+
+
+### Continuous Integration
+
+* Bump actions/checkout from 4 to 7 ([#26](https://github.com/ponomarenko/ctxmedic/issues/26)) ([d51c237](https://github.com/ponomarenko/ctxmedic/commit/d51c237604879ffc96c89856a46975eb8c911446))
+* Bump actions/setup-node from 4 to 7 ([#27](https://github.com/ponomarenko/ctxmedic/issues/27)) ([637e3a3](https://github.com/ponomarenko/ctxmedic/commit/637e3a32b7a2875ffc642c4d7a85c00dd395a7ab))
+* Bump googleapis/release-please-action from 4 to 5 ([#29](https://github.com/ponomarenko/ctxmedic/issues/29)) ([4cc3c6c](https://github.com/ponomarenko/ctxmedic/commit/4cc3c6c84a56701a8008a4c15c0e59b91ab54056))
+* Bump pnpm/action-setup from 4 to 6 ([#28](https://github.com/ponomarenko/ctxmedic/issues/28)) ([ed7c47d](https://github.com/ponomarenko/ctxmedic/commit/ed7c47dd47e86d37293da8da2852fc2f8db7c663))
+* fix the release pipeline and improve repo metadata ([#25](https://github.com/ponomarenko/ctxmedic/issues/25)) ([2375a5c](https://github.com/ponomarenko/ctxmedic/commit/2375a5c6c768df63af8e883a27b8670e0354befd))
+* group only minor and patch Dependabot updates ([#33](https://github.com/ponomarenko/ctxmedic/issues/33)) ([184570b](https://github.com/ponomarenko/ctxmedic/commit/184570b32dd4d952631f04d3b59593d79046e683))
+* run release-please from the repo root ([#30](https://github.com/ponomarenko/ctxmedic/issues/30)) ([c31d844](https://github.com/ponomarenko/ctxmedic/commit/c31d8440b627a6b47f3b217ef69dd93a69d33f2a))
+
+
+### Build System
+
+* **deps:** Bump @hono/node-server from 1.19.19 to 2.1.6 ([#23](https://github.com/ponomarenko/ctxmedic/issues/23)) ([bfb4eea](https://github.com/ponomarenko/ctxmedic/commit/bfb4eea242ede6b2fef8a5ff1fc159bf240eb0ea))
+
 ## 0.1.0 — 2026-11-22
 
 First public version.
