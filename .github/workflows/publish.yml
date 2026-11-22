@@ -25,7 +25,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       # Move the floating major tag (v0, v1, ...) so `uses: ponomarenko/ctxmedic@v0` gets the latest action.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.release.outputs.release_created
       - name: Move the major tag
         if: steps.release.outputs.release_created
@@ -44,7 +44,7 @@ jobs:
       id-token: write # npm trusted publishing (OIDC) and provenance
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:

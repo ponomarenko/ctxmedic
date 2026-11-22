@@ -12,7 +12,7 @@ jobs:
     name: Passes on this repository
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./
         with:
           fail-on: warning
@@ -21,7 +21,7 @@ jobs:
     name: Fails on a critical finding
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Make a project with a broken symlink
         run: mkdir sick && ln -s missing.md sick/CLAUDE.md
       - id: checkup
