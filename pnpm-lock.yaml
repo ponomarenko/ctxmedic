@@ -200,8 +200,8 @@ importers:
         specifier: ^0.9.1
         version: 0.9.1
       '@hono/node-server':
-        specifier: ^1.13.7
-        version: 1.19.19(hono@4.13.19)
+        specifier: ^2.1.6
+        version: 2.1.11(hono@4.13.19)
       commander:
         specifier: ^12.1.0
         version: 12.1.0
@@ -324,8 +324,8 @@ importers:
         specifier: workspace:*
         version: link:../harnesses
       '@hono/node-server':
-        specifier: ^1.13.7
-        version: 1.19.19(hono@4.13.19)
+        specifier: ^2.1.6
+        version: 2.1.11(hono@4.13.19)
       hono:
         specifier: ^4.6.14
         version: 4.13.19
@@ -921,11 +921,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@hono/node-server@1.19.19':
-    resolution: {integrity: sha512-Fy9R7PACOzHU9LDpfnuzVyuVYevKQRcEG2mZhmfc+DRdmayEd3RVfa2XOt2IgGcPNgA77Yk63KBszepcMFK5Ng==}
-    engines: {node: '>=18.14.1'}
+  '@hono/node-server@2.1.11':
+    resolution: {integrity: sha512-KzKz9vl4vvr1vgLHamj+g5uonbrj5NwAdO3yzOS6cd2HjALVeOgTgeZOyAzNxejbkfOOPIcvuf/Tg8l1pEFLog==}
+    engines: {node: '>=20'}
     peerDependencies:
-      hono: ^4
+      hono: ^4 || ^5.0.0-0
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -2320,7 +2320,7 @@ snapshots:
   '@esbuild/win32-x64@0.27.7':
     optional: true
 
-  '@hono/node-server@1.19.19(hono@4.13.19)':
+  '@hono/node-server@2.1.11(hono@4.13.19)':
     dependencies:
       hono: 4.13.19
 
