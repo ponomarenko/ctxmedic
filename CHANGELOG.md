@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.3](https://github.com/ponomarenko/ctxmedic/compare/v0.2.2...v0.2.3) (2026-11-22)
+
+
+### Continuous Integration
+
+* pin the supply chain and add OpenSSF Scorecard ([#45](https://github.com/ponomarenko/ctxmedic/issues/45)) ([3303c5d](https://github.com/ponomarenko/ctxmedic/commit/3303c5d314c86874c12feeae12bc3c85ab979148))
+* scope release token permissions and patch esbuild ([#47](https://github.com/ponomarenko/ctxmedic/issues/47)) ([48b54ab](https://github.com/ponomarenko/ctxmedic/commit/48b54ab659ff0831f621b9f90860fd80fb26798d))
+
 ## [0.2.2](https://github.com/ponomarenko/ctxmedic/compare/v0.2.1...v0.2.2) (2026-11-22)
 
 
