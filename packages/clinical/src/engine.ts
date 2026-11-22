@@ -6,8 +6,9 @@ import { Anamnesis, ClinicalReport, type ClinicalDiagnosis, type Lang, type Tria
 import { healthGain, healthScore } from "./score.js";
 import { loadAnamnesis, loadHistory, recordVisit } from "./store.js";
 
-// shortcut: kept in sync with packages/cli/package.json by hand; inject at build time if releases get frequent.
-export const VERSION = "0.1.0";
+// Replaced by tsup `define` from packages/cli/package.json; undefined when run from source (vitest).
+declare const __CTXMEDIC_VERSION__: string | undefined;
+export const VERSION = typeof __CTXMEDIC_VERSION__ === "string" ? __CTXMEDIC_VERSION__ : "0.0.0-dev";
 
 const TRIAGE: Record<Finding["severity"], Triage> = { critical: "resuscitation", warning: "therapy", info: "preventive" };
 const ORDER: Triage[] = ["resuscitation", "therapy", "preventive"];
