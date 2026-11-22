@@ -71,7 +71,7 @@ const en: Messages = {
       name: "Context Obesity",
       prognosis: (f) =>
         `${n(d(f, "tokens"))} tokens ride along with every request. Rules in the middle get "lost in the middle", attention drifts and the bill grows with each turn.`,
-      action: () => "Move rarely-needed sections into skills or path-scoped rules; keep the always-on core under 3,500 tokens.",
+      action: (f) => `Move rarely-needed sections into skills or path-scoped rules; keep the always-on core under ${n(d(f, "threshold"))} tokens.`,
     },
     WARN_DUPLICATE_RULES: {
       name: "Instruction Duplication Syndrome",

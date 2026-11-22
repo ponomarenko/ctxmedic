@@ -13,7 +13,7 @@ presented as a doctor's checkup. Author: Vitalii Ponomarenko. License: FSL-1.1-M
 
 | Package | Role |
 |---|---|
-| `packages/core` | Zod contracts (`schema.ts`), scanner, parsers, tokens, 7 rules (`rules/`), `applyFix`, `examine` |
+| `packages/core` | Zod contracts (`schema.ts`), scanner, parsers, tokens, 7 rules (`rules/`), `ctxmedic.config.json` (`config.ts`), `applyFix`, `examine` |
 | `packages/harnesses` | declarative profiles of supported tools (paths, syntax, logs) |
 | `packages/finops` | session-log parsers, price table, 4 cost detectors, parse cache |
 | `packages/clinical` | diagnoses, `RX-NN` prescriptions, Health Score, history, message catalogs (`i18n.ts`), `consult --ai` |
@@ -41,8 +41,8 @@ real `~` in tests.
 - Secrets are always masked in output (`mask` / `redactSecrets` in `core/src/secrets.ts`).
 - Fixes go through `applyFix`: backup, git-dirty check, no writes outside the root.
 - The UI server binds to `127.0.0.1`; write routes require the per-run token.
-- A new rule needs: the rule in `core/src/rules/`, a card in `clinical/src/i18n.ts`
-  (`en` catalog), a fixture test.
+- A new rule needs: the rule in `core/src/rules/` with `meta` (thresholds as `meta.options`),
+  a card in `clinical/src/i18n.ts` (`en` catalog), a page in `docs/rules/`, a fixture test.
 - Record new design decisions in `docs/ADR.md`; mark known limits in code as
   `shortcut: <limit>, <when to upgrade>`.
 - Node 20+ only, no native dependencies.

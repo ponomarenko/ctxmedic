@@ -9,3 +9,4 @@ export * from "./secrets.js";
 export * from "./rules/index.js";
 export * from "./fix.js";
 export * from "./examine.js";
+export * from "./config.js";

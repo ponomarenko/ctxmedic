@@ -19,7 +19,7 @@ import {
   type Anamnesis,
   type Lang,
 } from "@ctxmedic/clinical";
-import { applyFix, examine, FixRefusedError, listBackups, restoreBackup, type FixPlan } from "@ctxmedic/core";
+import { applyFix, ConfigError, examine, FixRefusedError, listBackups, restoreBackup, type FixPlan } from "@ctxmedic/core";
 import { analyze } from "@ctxmedic/finops";
 import { harnesses } from "@ctxmedic/harnesses";
 import { startServer } from "@ctxmedic/server";
@@ -49,7 +49,7 @@ const ctx = (dir: string | undefined, o: Common) => ({
 });
 
 function fail(e: unknown): never {
-  console.error(pc.red(`✖ ${e instanceof FixRefusedError ? e.message : (e as Error).stack ?? e}`));
+  console.error(pc.red(`✖ ${e instanceof FixRefusedError || e instanceof ConfigError ? e.message : (e as Error).stack ?? e}`));
   process.exit(2);
 }
 
@@ -118,8 +118,8 @@ common(program.command("savings [path]").description("FinOps: token spend, cache
   .option("--json", "print the FinOps report as JSON")
   .action(async (dir: string | undefined, o: Common) => {
     const c = ctx(dir, o);
-    const ex = await examine(c.root, harnesses, { global: c.global });
-    const f = await analyze({ root: c.root, files: ex.files, days: c.days }).catch(fail);
+    const ex = await examine(c.root, harnesses, { global: c.global }).catch(fail);
+    const f = await analyze({ root: c.root, files: ex.files, days: c.days, config: ex.config }).catch(fail);
     if (o.json) return console.log(JSON.stringify(f, null, 2));
     console.log("\n" + render.finopsSummary(f, c.lang) + "\n");
     const r = await checkup({ ...c, record: false });

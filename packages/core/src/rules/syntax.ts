@@ -1,6 +1,6 @@
 import { parseFrontmatter } from "../parse.js";
 import type { Finding } from "../schema.js";
-import type { Rule } from "./types.js";
+import { docsUrl, type Rule } from "./types.js";
 
 function directives(text: string): string[] {
   const found = new Set<string>();
@@ -12,6 +12,12 @@ function directives(text: string): string[] {
 
 export const syntax: Rule = {
   id: "INFO_UNSUPPORTED_SYNTAX",
+  meta: {
+    description: "Flag directives a harness does not understand",
+    type: "suggestion",
+    docs: docsUrl("INFO_UNSUPPORTED_SYNTAX"),
+    fixable: false,
+  },
   check: ({ files, profiles }) => {
     const out: Finding[] = [];
     for (const f of files) {

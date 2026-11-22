@@ -1,7 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { FixOp, ScannedFile } from "../schema.js";
-import { DUPLICATE_SIMILARITY, type Rule } from "./types.js";
+import { z } from "zod";
+import { DUPLICATE_SIMILARITY, docsUrl, type Rule } from "./types.js";
+
+const Options = z.object({ similarity: z.number().gt(0).lt(1).default(DUPLICATE_SIMILARITY) });
 
 const norm = (text: string) =>
   new Set(
@@ -42,9 +45,16 @@ function hubFix(root: string, a: ScannedFile, b: ScannedFile): FixOp[] {
   ];
 }
 
-export const duplicates: Rule = {
+export const duplicates: Rule<z.infer<typeof Options>> = {
   id: "WARN_DUPLICATE_RULES",
-  check: ({ root, files }) => {
+  meta: {
+    description: "Do not keep near-identical instruction files for different harnesses",
+    type: "suggestion",
+    docs: docsUrl("WARN_DUPLICATE_RULES"),
+    fixable: true,
+    options: Options,
+  },
+  check: ({ root, files }, { similarity: threshold }) => {
     const docs = files.filter((f) => f.role === "instructions" && f.text && !f.broken);
     const out = [];
     const seen = new Set<string>();
@@ -57,7 +67,7 @@ export const duplicates: Rule = {
         if (seen.has(key)) continue;
         seen.add(key);
         const sim = similarity(a.text!, b.text!);
-        if (sim <= DUPLICATE_SIMILARITY) continue;
+        if (sim <= threshold) continue;
         const ops = a.scope === "project" && b.scope === "project" && !a.isSymlink && !b.isSymlink ? hubFix(root, a, b) : [];
         out.push({
           ruleId: "WARN_DUPLICATE_RULES" as const,

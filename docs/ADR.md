@@ -148,3 +148,35 @@ A hijacked npm release would otherwise reach every user on the next run.
 Workflows pin third-party actions to commit SHAs with the version in a comment;
 Dependabot updates both. OpenSSF Scorecard runs weekly and publishes a public
 score for the README badge.
+
+## ADR-020 Rule configuration, ESLint style
+Users tune rules the way ESLint users do, as the first step towards a rule
+ecosystem (see the roadmap, "v0.4 Rule ecosystem").
+- **Config file.** `ctxmedic.config.json` in the scanned root, validated by
+  `CtxmedicConfig` (`packages/core/src/config.ts`). JSON only: a JS config
+  would run project code on `checkup`, which a local diagnostic tool should
+  not do by default. An invalid config stops the run (`ConfigError`); it never
+  falls back to defaults silently.
+- **Levels.** `"off" | "on" | Severity`. `"on"` keeps the severity the rule
+  picks, because our rules grade findings (bloat is a warning, 3× bloat is
+  critical); ESLint's `warn`/`error` would flatten that. A severity forces it.
+- **Options.** `[level, options]`. A rule declares `meta.options` as a Zod
+  schema with defaults, so options are checked at load time and the rule gets
+  typed, complete options. Thresholds move from constants into options.
+- **Rule meta.** Every core rule has `meta` (`description`, `type`, `docs`,
+  `fixable`, `options`), and every rule id has a page in `docs/rules/`. A test
+  fails when a core rule has no page.
+- **Suppression.** `ignores` (globs over the paths a finding reports; dropped
+  only when every path matches) and `<!-- ctxmedic-disable [IDS] [-- reason] -->`
+  in Markdown, which silences matching findings that report that file. Both run
+  in `applyConfig`, after the rules, so `examine` and `analyze` filter the same
+  way; turned-off rules are not run at all.
+- **Score and history.** Dropped findings do not count. `ScanSettings.config`
+  holds `configHash` of the levels, options and `ignores` ("" without a config,
+  and for older history), so the trend compares only visits with the same
+  config (extends ADR-017).
+
+Known limits: `FIN_*` detectors take no options and have no `meta` yet (they
+are functions in `finops`, not `Rule` objects); disables are per file, not per
+line; adding or removing an inline disable comment changes the score without
+starting a new trend, like any other edit to the files.

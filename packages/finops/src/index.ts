@@ -1,4 +1,4 @@
-import { FinOpsReport, findFiles, type ScannedFile } from "@ctxmedic/core";
+import { applyConfig, FinOpsReport, findFiles, type CtxmedicConfig, type ScannedFile } from "@ctxmedic/core";
 import { cachedParse, loadCache, saveCache } from "./cache.js";
 import { detectors } from "./detectors.js";
 import { LOG_SOURCES, type SessionStats } from "./parsers.js";
@@ -14,6 +14,8 @@ export interface AnalyzeOptions {
   root: string;
   files: ScannedFile[];
   now?: Date;
+  /** Levels, `ignores` and inline disables from `ctxmedic.config.json` (`examine().config`). */
+  config?: CtxmedicConfig;
 }
 
 export async function loadSessions(days: number, now = new Date()): Promise<SessionStats[]> {
@@ -31,7 +33,7 @@ export async function loadSessions(days: number, now = new Date()): Promise<Sess
   return all.filter((s) => (s.end ?? "") >= since);
 }
 
-export function buildReport(sessions: SessionStats[], { days = 30, root, files }: AnalyzeOptions): FinOpsReport {
+export function buildReport(sessions: SessionStats[], { days = 30, root, files, config }: AnalyzeOptions): FinOpsReport {
   const byModel = new Map<string, { model: string; steps: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number }>();
   const byHarness: Record<string, { sessions: number; costUsd: number }> = {};
   const mcpCalls: Record<string, number> = {};
@@ -59,7 +61,9 @@ export function buildReport(sessions: SessionStats[], { days = 30, root, files }
       read += u.cacheRead;
     }
   }
-  const findings = detectors.flatMap((d) => d({ sessions, days, files, root }));
+  const raw = detectors.flatMap((d) => d({ sessions, days, files, root }));
+  // shortcut: FIN_* detectors take no options yet (thresholds are constants), until they become core-style rules.
+  const findings = config ? applyConfig(raw, files, config) : raw;
   return FinOpsReport.parse({
     periodDays: days,
     sessions: sessions.length,

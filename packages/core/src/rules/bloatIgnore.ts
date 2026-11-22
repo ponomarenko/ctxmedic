@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { Rule } from "./types.js";
+import { docsUrl, type Rule } from "./types.js";
 
 const HEAVY = [
   "node_modules/", "dist/", "build/", "out/", ".next/", ".nuxt/", "coverage/", "target/", "vendor/",
@@ -10,6 +10,12 @@ const HEAVY = [
 
 export const bloatIgnore: Rule = {
   id: "FIN_BLOAT_IGNORE",
+  meta: {
+    description: "Keep build output and lockfiles out of the AI index with an ignore file",
+    type: "suggestion",
+    docs: docsUrl("FIN_BLOAT_IGNORE"),
+    fixable: true,
+  },
   check: ({ root, files, profiles }) => {
     const out = [];
     for (const h of profiles) {

@@ -23,7 +23,7 @@ function writeJson(file: string, v: unknown) {
 
 /** `days` only matters when session logs were analyzed. */
 export const sameScan = (a: ScanSettings, b: ScanSettings) =>
-  a.global === b.global && a.finops === b.finops && (!a.finops || a.days === b.days);
+  a.global === b.global && a.finops === b.finops && (!a.finops || a.days === b.days) && a.config === b.config;
 
 /** Visits, optionally only for one root and only those scanned with the same settings. */
 export function loadHistory(root?: string, scan?: ScanSettings): Visit[] {

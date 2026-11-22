@@ -5,7 +5,7 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { checkup, loadHistory, resolveLang, scanSettings, treat, type Lang } from "@ctxmedic/clinical";
-import { examine, FixRefusedError, similarity } from "@ctxmedic/core";
+import { configHash, examine, FixRefusedError, loadConfig, similarity } from "@ctxmedic/core";
 import { harnesses } from "@ctxmedic/harnesses";
 
 export interface ServerOptions {
@@ -34,7 +34,7 @@ export function createApp(opts: ServerOptions & { token: string }) {
   });
 
   // Only visits scanned like /api/checkup scans, so the chart shows no fake jumps (ADR-017).
-  app.get("/api/history", (c) => c.json(loadHistory(root, scanSettings({ days: opts.days }))));
+  app.get("/api/history", (c) => c.json(loadHistory(root, scanSettings({ days: opts.days, config: configHash(loadConfig(root)) }))));
 
   /** Nodes and edges for the dependency graph: files per harness, symlinks, duplicates. */
   app.get("/api/graph", async (c) => {

@@ -87,8 +87,8 @@ package from npm.
 | Code | Diagnosis | Auto-fix |
 |---|---|---|
 | `ERR_BROKEN_LINK` | Symlink Necrosis: broken, circular or absolute symlinks | relative links |
-| `WARN_CONTEXT_BLOAT` | Context Obesity: > 3,500 tokens loaded at session start | — |
-| `WARN_DUPLICATE_RULES` | Instruction Duplication: > 75% similar instruction files | hub-and-spoke `.ai/` + symlinks |
+| `WARN_CONTEXT_BLOAT` | Context Obesity: > 3,500 tokens (configurable) loaded at session start | — |
+| `WARN_DUPLICATE_RULES` | Instruction Duplication: > 75% (configurable) similar instruction files | hub-and-spoke `.ai/` + symlinks |
 | `ERR_INVALID_SKILL` | Skill Amnesia: bad `SKILL.md` frontmatter, names, triggers | — |
 | `CRIT_SECRET_LEAK` | Credential Hemorrhage: API keys in configs (masked in output) | — |
 | `INFO_UNSUPPORTED_SYNTAX` | Cross-Harness Allergy: `@import`, `alwaysApply`… read by tools that ignore them | — |
@@ -100,6 +100,15 @@ package from npm.
 
 Every fix backs up the originals to `.ctxmedic/backups/<timestamp>/` and
 refuses to touch files with uncommitted git changes unless you pass `--force`.
+
+Each rule has a [docs page](docs/rules/README.md). To turn rules off, change
+their severity or thresholds, or ignore paths, add `ctxmedic.config.json`:
+
+```json
+{ "rules": { "INFO_UNSUPPORTED_SYNTAX": "off", "WARN_CONTEXT_BLOAT": ["on", { "tokens": 6000 }] } }
+```
+
+To silence a rule for one Markdown file: `<!-- ctxmedic-disable WARN_CONTEXT_BLOAT -- reason -->`.
 
 ## Privacy
 

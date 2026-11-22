@@ -1,9 +1,15 @@
 import path from "node:path";
 import type { Finding } from "../schema.js";
-import type { Rule } from "./types.js";
+import { docsUrl, type Rule } from "./types.js";
 
 export const brokenLink: Rule = {
   id: "ERR_BROKEN_LINK",
+  meta: {
+    description: "Symlinked configs must point to an existing target, without loops or absolute paths",
+    type: "problem",
+    docs: docsUrl("ERR_BROKEN_LINK"),
+    fixable: true,
+  },
   check: ({ files }) =>
     files.flatMap((f): Finding[] => {
       if (f.broken || f.loop)

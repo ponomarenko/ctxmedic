@@ -78,7 +78,7 @@ export function report(r: ClinicalReport): string {
 
 /** CLI flags of a non-default scan, so rows that are not comparable are visible. */
 const scanFlags = ({ scan: s }: Visit) => {
-  const f = [!s.global && "--no-global", !s.finops && "--no-finops", s.finops && s.days !== DEFAULT_SCAN.days && `--days ${s.days}`].filter(Boolean);
+  const f = [!s.global && "--no-global", !s.finops && "--no-finops", s.finops && s.days !== DEFAULT_SCAN.days && `--days ${s.days}`, s.config && `config ${s.config}`].filter(Boolean);
   return f.length ? pc.yellow(`  ${f.join(" ")}`) : "";
 };
 

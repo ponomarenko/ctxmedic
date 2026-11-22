@@ -1,9 +1,15 @@
 import { isGitIgnored } from "../git.js";
 import { findSecrets } from "../secrets.js";
-import type { Rule } from "./types.js";
+import { docsUrl, type Rule } from "./types.js";
 
 export const secretLeak: Rule = {
   id: "CRIT_SECRET_LEAK",
+  meta: {
+    description: "Do not store secrets in plain text in AI configs",
+    type: "problem",
+    docs: docsUrl("CRIT_SECRET_LEAK"),
+    fixable: false,
+  },
   check: ({ files }) =>
     files.flatMap((f) => {
       if (!f.text) return [];

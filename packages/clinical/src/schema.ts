@@ -41,9 +41,15 @@ export const Anamnesis = z.object({
 export type Anamnesis = z.infer<typeof Anamnesis>;
 
 /** Scan flags that change the score; visits are compared only when these match (ADR-017). */
-export const ScanSettings = z.object({ global: z.boolean(), finops: z.boolean(), days: z.number() });
+export const ScanSettings = z.object({
+  global: z.boolean(),
+  finops: z.boolean(),
+  days: z.number(),
+  /** `configHash` of ctxmedic.config.json; "" without one, and in history written before v0.3. */
+  config: z.string().default(""),
+});
 export type ScanSettings = z.infer<typeof ScanSettings>;
-export const DEFAULT_SCAN: ScanSettings = { global: true, finops: true, days: 30 };
+export const DEFAULT_SCAN: ScanSettings = { global: true, finops: true, days: 30, config: "" };
 
 export const Visit = z.object({
   at: z.string(),

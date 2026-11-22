@@ -1,6 +1,6 @@
 import { parseFrontmatter } from "../parse.js";
 import type { Finding } from "../schema.js";
-import type { Rule } from "./types.js";
+import { docsUrl, type Rule } from "./types.js";
 
 const NAME = /^[a-z0-9][a-z0-9-]{0,63}$/;
 // Any wording that tells the model WHEN to load the skill counts ("Use when", "Use with", "Trigger on", ...).
@@ -8,6 +8,12 @@ const TRIGGER = /\b(use|when|whenever|triggers?|invoke)\b/i;
 
 export const skills: Rule = {
   id: "ERR_INVALID_SKILL",
+  meta: {
+    description: "Skills need valid frontmatter, a unique name and a description with a trigger",
+    type: "problem",
+    docs: docsUrl("ERR_INVALID_SKILL"),
+    fixable: false,
+  },
   check: ({ files }) => {
     const out: Finding[] = [];
     const names = new Map<string, string[]>();
