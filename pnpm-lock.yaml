@@ -251,12 +251,18 @@ importers:
 
   packages/clinical:
     dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.70.0
+        version: 0.70.1(zod@3.25.76)
       '@ctxmedic/core':
         specifier: workspace:*
         version: link:../core
       '@ctxmedic/finops':
         specifier: workspace:*
         version: link:../finops
+      '@ctxmedic/harnesses':
+        specifier: workspace:*
+        version: link:../harnesses
       zod:
         specifier: ^3.24.1
         version: 3.25.76

@@ -1,0 +1,64 @@
+import { z } from "zod";
+import { Finding, FinOpsReport, PatientVitals, RuleId } from "@ctxmedic/core";
+
+export const Lang = z.enum(["en", "uk"]);
+export type Lang = z.infer<typeof Lang>;
+
+export const Triage = z.enum(["resuscitation", "therapy", "preventive"]);
+export type Triage = z.infer<typeof Triage>;
+
+export const PrescriptionRx = z.object({
+  id: z.string().regex(/^RX-\d{2,}$/),
+  action: z.string(),
+  command: z.string().optional(),
+  autoFix: z.boolean(),
+  healthGain: z.number().nonnegative(),
+  monthlySavingsUsd: z.number().nonnegative().optional(),
+});
+export type PrescriptionRx = z.infer<typeof PrescriptionRx>;
+
+export const ClinicalDiagnosis = z.object({
+  code: RuleId,
+  triage: Triage,
+  diagnosis: z.string(),
+  summary: z.string(),
+  vitals: z.array(z.object({ label: z.string(), value: z.string() })),
+  prognosis: z.string(),
+  rx: PrescriptionRx,
+  files: z.array(z.string()),
+  finding: Finding,
+});
+export type ClinicalDiagnosis = z.infer<typeof ClinicalDiagnosis>;
+
+export const Anamnesis = z.object({
+  priority: z.enum(["economy", "balanced", "quality"]).default("balanced"),
+  primaryHarness: z.string().optional(),
+  monthlyBudgetUsd: z.number().nonnegative().optional(),
+});
+export type Anamnesis = z.infer<typeof Anamnesis>;
+
+export const Visit = z.object({
+  at: z.string(),
+  root: z.string(),
+  healthScore: z.number(),
+  counts: z.record(Triage, z.number()),
+  monthlySpendUsd: z.number().optional(),
+  potentialMonthlySavingsUsd: z.number(),
+});
+export type Visit = z.infer<typeof Visit>;
+
+export const ClinicalReport = z.object({
+  tool: z.literal("ctxmedic"),
+  version: z.string(),
+  lang: Lang,
+  generatedAt: z.string(),
+  patient: PatientVitals,
+  healthScore: z.number().min(0).max(100),
+  previous: Visit.nullable(),
+  opinion: z.string(),
+  counts: z.record(Triage, z.number()),
+  diagnoses: z.array(ClinicalDiagnosis),
+  finops: FinOpsReport.nullable(),
+  potentialMonthlySavingsUsd: z.number(),
+});
+export type ClinicalReport = z.infer<typeof ClinicalReport>;

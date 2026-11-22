@@ -135,3 +135,10 @@ export async function scan(root: string, profiles: HarnessProfile[], opts: ScanO
   }
   return [...byPath.values()].sort((a, b) => a.rel.localeCompare(b.rel));
 }
+
+/** Absolute paths of regular files matching a `~/`-relative or absolute glob (used for session logs). */
+export async function findFiles(pattern: string): Promise<string[]> {
+  const base = pattern.startsWith("~/") ? homeDir() : "/";
+  const rel = pattern.replace(/^~\//, "").replace(/^\//, "");
+  return (await expand(base, rel)).filter((e) => e.isFile && !e.broken).map((e) => e.abs);
+}
