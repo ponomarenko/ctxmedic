@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "license": "FSL-1.1-MIT",
-  "author": "Vitalii Ponomarenko <https://github.com/ponomarenko>",
+  "author": "Vitalii Ponomarenko (https://github.com/ponomarenko)",
   "packageManager": "pnpm@12.21.0",
   "engines": {
     "node": ">=20"

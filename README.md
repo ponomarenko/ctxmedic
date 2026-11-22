@@ -1,6 +1,13 @@
 # ctxmedic
 
-> The context medic for your AI coding setup.
+[![npm](https://img.shields.io/npm/v/ctxmedic)](https://www.npmjs.com/package/ctxmedic)
+[![downloads](https://img.shields.io/npm/dm/ctxmedic)](https://www.npmjs.com/package/ctxmedic)
+[![CI](https://github.com/ponomarenko/ctxmedic/actions/workflows/ci.yml/badge.svg)](https://github.com/ponomarenko/ctxmedic/actions/workflows/ci.yml)
+[![node](https://img.shields.io/node/v/ctxmedic)](https://www.npmjs.com/package/ctxmedic)
+[![license](https://img.shields.io/badge/license-FSL--1.1--MIT-blue)](https://github.com/ponomarenko/ctxmedic/blob/main/LICENSE)
+
+> The context medic for your AI coding setup: a linter, auto-fixer and
+> token-cost analyzer for `CLAUDE.md`, `AGENTS.md`, Cursor rules, skills and MCP configs.
 
 ctxmedic examines the AI configuration of a project like a doctor examines a
 patient. It reads your `CLAUDE.md`, `AGENTS.md`, Cursor/Windsurf/Copilot/Cline
@@ -10,6 +17,11 @@ save tokens and money.
 
 Works with Claude Code, Cursor, Windsurf, Codex CLI, OpenCode, GitHub Copilot
 and Cline. 100% local: nothing leaves your machine.
+
+**Why:** AI coding tools load your rules, skills and MCP tool schemas into every
+request. Bloated or duplicated `CLAUDE.md` files, broken links, leaked secrets and
+long sessions without `/compact` quietly cost tokens, money and answer quality.
+ctxmedic finds them, explains them, and fixes them safely.
 
 ```bash
 npx ctxmedic checkup

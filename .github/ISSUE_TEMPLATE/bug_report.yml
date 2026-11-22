@@ -1,0 +1,26 @@
+name: Bug report
+description: ctxmedic gave a wrong diagnosis, crashed, or a fix went wrong.
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: ctxmedic version
+      description: Output of `npx ctxmedic --version`.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: OS and Node version
+      placeholder: macOS 15, Node 22.11
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What you ran and what happened
+      description: The command, the output, and what you expected. Remove secrets and private paths first.
+      render: shell
+    validations:
+      required: true

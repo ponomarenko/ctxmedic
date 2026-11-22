@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Move the floating major tag (v0, v1, ...) so `uses: ponomarenko/ctxmedic@v0` gets the latest action.
+      - uses: actions/checkout@v4
+        if: steps.release.outputs.release_created
+      - name: Move the major tag
+        if: steps.release.outputs.release_created
+        env:
+          MAJOR: v${{ steps.release.outputs.major }}
+          TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          git tag -f "$MAJOR" "$TAG"
+          git push -f origin "$MAJOR"
+
+  publish:
+    needs: release
+    if: needs.release.outputs.release_created
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # npm trusted publishing (OIDC) and provenance
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24 # npm 11.5+ is needed for trusted publishing
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      # pnpm pack rewrites workspace:* ranges; npm publish does the OIDC exchange.
+      - name: Publish to npm
+        working-directory: packages/cli
+        run: |
+          pnpm pack
+          npm publish ctxmedic-*.tgz --provenance --access public
