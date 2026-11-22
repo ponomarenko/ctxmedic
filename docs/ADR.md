@@ -138,3 +138,13 @@ sessions. A server never seen in the logs falls back to `MCP_SCHEMA_TOKENS`
 was measured, and the card says which one was used. The parse cache moved to
 `v: 3` so old aggregates are re-parsed. Tools that Claude Code defers (loaded
 on demand) are not in `shape.tools` and are not priced.
+
+## ADR-019 Pinned supply chain
+The GitHub Action no longer installs `ctxmedic@latest` by default. With an
+empty `version` input it reads `packages/cli/package.json` from its own
+checkout (`$GITHUB_ACTION_PATH`), so `@v0.2.1` or a commit SHA runs exactly the
+CLI released with that commit, and `@v0` moves only when the major tag moves.
+A hijacked npm release would otherwise reach every user on the next run.
+Workflows pin third-party actions to commit SHAs with the version in a comment;
+Dependabot updates both. OpenSSF Scorecard runs weekly and publishes a public
+score for the README badge.

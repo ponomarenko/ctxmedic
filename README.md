@@ -5,6 +5,7 @@
 [![CI](https://github.com/ponomarenko/ctxmedic/actions/workflows/ci.yml/badge.svg)](https://github.com/ponomarenko/ctxmedic/actions/workflows/ci.yml)
 [![node](https://img.shields.io/node/v/ctxmedic)](https://www.npmjs.com/package/ctxmedic)
 [![license](https://img.shields.io/badge/license-FSL--1.1--MIT-blue)](https://github.com/ponomarenko/ctxmedic/blob/main/LICENSE)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/ponomarenko/ctxmedic/badge)](https://scorecard.dev/viewer/?uri=github.com/ponomarenko/ctxmedic)
 
 > The context medic for your AI coding setup: a linter, auto-fixer and
 > token-cost analyzer for `CLAUDE.md`, `AGENTS.md`, Cursor rules, skills and MCP configs.
@@ -75,7 +76,7 @@ jobs:
         with:
           fail-on: critical # or "warning" to fail on 🟡 too
           # path: .        # project folder
-          # version: 0.1.0 # ctxmedic version from npm (default: latest)
+          # version: 0.1.0 # ctxmedic version from npm (default: the one released with this Action ref)
 ```
 
 Nothing leaves the runner: no telemetry, no network calls besides installing the

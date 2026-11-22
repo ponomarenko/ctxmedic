@@ -16,8 +16,8 @@ inputs:
     description: Report language (only `en` for now).
     default: en
   version:
-    description: ctxmedic version from npm, for example `0.1.0`. Pin it for reproducible builds.
-    default: latest
+    description: ctxmedic version from npm, for example `0.1.0`. Default is the version released with this Action ref, so a SHA-pinned Action runs a fixed CLI.
+    default: ""
 
 runs:
   using: composite
@@ -31,6 +31,10 @@ runs:
         CTXMEDIC_LANG: ${{ inputs.lang }}
         CTXMEDIC_VERSION: ${{ inputs.version }}
       run: |
+        # Not `latest`: a hijacked npm release must not reach every `@v0` user at once.
+        if [ -z "$CTXMEDIC_VERSION" ]; then
+          CTXMEDIC_VERSION=$(node -p "require(process.argv[1]).version" "$GITHUB_ACTION_PATH/packages/cli/package.json")
+        fi
         report="$RUNNER_TEMP/ctxmedic-report.json"
         set +e
         npx --yes "ctxmedic@$CTXMEDIC_VERSION" checkup "$CTXMEDIC_PATH" --no-global --no-finops --json --lang "$CTXMEDIC_LANG" > "$report"
