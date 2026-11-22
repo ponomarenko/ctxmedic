@@ -52,4 +52,16 @@ describe("cli", () => {
     expect(r.stdout).toContain("dry-run");
     expect(snapshot(root)).toEqual(before);
   });
+
+  it("restore lists backups and undoes treat", () => {
+    const root = project({ ".cursorrules": "Use TypeScript strict mode everywhere." });
+    fs.mkdirSync(path.join(root, "dist"));
+    expect(spawnSync(process.execPath, [bin, "restore"], { cwd: root, encoding: "utf8" }).stdout).toContain("nothing to restore");
+    expect(run(["treat", "--all", "-y"], root).status).toBe(0);
+    expect(fs.existsSync(path.join(root, ".cursorignore"))).toBe(true);
+    expect(spawnSync(process.execPath, [bin, "restore"], { cwd: root, encoding: "utf8" }).stdout).toMatch(/\d{4}-\d{2}-\d{2}T.*\n/);
+    const r = spawnSync(process.execPath, [bin, "restore", "latest"], { cwd: root, encoding: "utf8" });
+    expect(r.status).toBe(0);
+    expect(fs.existsSync(path.join(root, ".cursorignore"))).toBe(false);
+  });
 });

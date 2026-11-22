@@ -98,3 +98,16 @@ The seam for more languages stays:
 To add a language: add its code to `Lang`, a `Messages` catalog, and an `L`
 entry in the UI. The Ukrainian catalog from v0.1 is in git history (commit
 `9fed11c`) if it is needed again.
+
+## ADR-016 Restore
+`ctxmedic restore <id|latest>` undoes one fix from its backup
+(`restoreBackup` in `packages/core/src/fix.ts`). The manifest
+(`BackupManifest` in `core/src/schema.ts`) records, per path, what the fix
+left there: a SHA-256 of the written content or the symlink target. Restore
+refuses, before writing anything, when a path no longer matches (the user
+edited it after the fix), unless `--force`. Backups from v0.1.0 lack this
+record and need `--force`.
+
+Restore only touches paths inside the project root and backup copies inside
+the backup folder, so a tampered manifest cannot write elsewhere. Folders a
+fix created (for example `.ai/`) are left in place, empty, after restore.

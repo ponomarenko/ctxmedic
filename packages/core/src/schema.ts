@@ -27,6 +27,31 @@ export type FixOp = z.infer<typeof FixOp>;
 export const FixPlan = z.object({ title: z.string(), ops: z.array(FixOp).min(1) });
 export type FixPlan = z.infer<typeof FixPlan>;
 
+/** What a fix left at a path, so `restore` can tell whether the user changed it since (ADR-016). */
+export const FixAfter = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("write"), sha256: z.string() }),
+  z.object({ kind: z.literal("symlink"), target: z.string() }),
+]);
+export type FixAfter = z.infer<typeof FixAfter>;
+
+/** `.ctxmedic/backups/<id>/manifest.json` (ADR-006). `after` is missing in backups made by v0.1.0. */
+export const BackupManifest = z.object({
+  title: z.string(),
+  createdAt: z.string(),
+  entries: z.array(
+    z.object({
+      path: z.string(),
+      existed: z.boolean(),
+      /** Copy of the original, relative to the backup folder. */
+      backup: z.string().optional(),
+      /** Original symlink target. */
+      symlink: z.string().optional(),
+      after: FixAfter.optional(),
+    }),
+  ),
+});
+export type BackupManifest = z.infer<typeof BackupManifest>;
+
 export const Finding = z.object({
   ruleId: RuleId,
   severity: Severity,

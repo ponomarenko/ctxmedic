@@ -36,6 +36,7 @@ npx ctxmedic checkup
 |---|---|
 | `ctxmedic checkup [path]` | Full examination. `--json` for machines, exit code 1 on 🔴 findings (CI gate). |
 | `ctxmedic treat RX-01` | Apply one prescription. `--all`, `--dry-run`, `--force`, `-y`. |
+| `ctxmedic restore [backup\|latest]` | Undo a fix from `.ctxmedic/backups`. No argument lists backups. `--dry-run`, `--force`. |
 | `ctxmedic savings` | FinOps only: spend, run rate, cache hit ratio, savings. |
 | `ctxmedic consult [--ai]` | Interactive appointment: your priorities, budget and main tool shape the treatment plan. `--ai` asks local Ollama or your own Anthropic/OpenAI key for a second opinion. |
 | `ctxmedic history` | Health Score over time. |

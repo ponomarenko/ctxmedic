@@ -19,7 +19,7 @@ import {
   type Anamnesis,
   type Lang,
 } from "@ctxmedic/clinical";
-import { applyFix, examine, FixRefusedError, type FixPlan } from "@ctxmedic/core";
+import { applyFix, examine, FixRefusedError, listBackups, restoreBackup, type FixPlan } from "@ctxmedic/core";
 import { analyze } from "@ctxmedic/finops";
 import { harnesses } from "@ctxmedic/harnesses";
 import { startServer } from "@ctxmedic/server";
@@ -92,6 +92,26 @@ common(program.command("treat [rx]").description("apply a prescription (e.g. RX-
       const res = await applyFix(plan, { root: c.root, dryRun: o.dryRun, force: o.force, global: false }).catch(fail);
       console.log(`${o.dryRun ? pc.yellow("dry-run") : pc.green("✔")} ${plan.title}${res.dryRun ? "" : pc.dim(`  backup: ${path.relative(c.root, res.backupDir)}`)}`);
     }
+  });
+
+program
+  .command("restore [backup]")
+  .description("undo a fix: list backups, or restore one by id (or latest)")
+  .option("--lang <lang>", "interface language (only en for now)")
+  .option("--dry-run", "show what would change without writing")
+  .option("--force", "restore even if files changed after the fix")
+  .action(async (id: string | undefined, o: { lang?: string; dryRun?: boolean; force?: boolean }) => {
+    const root = path.resolve(".");
+    const m = messages(resolveLang(o.lang) as Lang).cli;
+    if (!id) {
+      const all = await listBackups(root);
+      if (!all.length) return console.log(m.noBackups);
+      for (const b of all) console.log(`${pc.cyan(b.id)}  ${b.title}`);
+      return console.log(pc.dim(`\n${m.restoreHint}`));
+    }
+    const r = await restoreBackup(id, { root, dryRun: o.dryRun, force: o.force }).catch(fail);
+    for (const line of r.restored) console.log(pc.dim(`  ${line}`));
+    console.log(`${r.dryRun ? pc.yellow("dry-run") : pc.green("✔")} ${m.restored(r.id)}: ${r.title}`);
   });
 
 common(program.command("savings [path]").description("FinOps: token spend, cache hit ratio and savings prescriptions"))

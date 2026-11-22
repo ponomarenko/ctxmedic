@@ -26,6 +26,9 @@ export interface Messages {
     runRate: string;
   };
   cli: {
+    noBackups: string;
+    restoreHint: string;
+    restored: (id: string) => string;
     noAutoFix: string;
     confirmApply: string;
     consultTitle: string;
@@ -147,6 +150,9 @@ const en: Messages = {
     runRate: "run rate",
   },
   cli: {
+    noBackups: "No backups in .ctxmedic/backups: nothing to restore.",
+    restoreHint: "Undo a fix: ctxmedic restore <backup> (or latest)",
+    restored: (id) => `Restored backup ${id}`,
     noAutoFix: "No auto-fix: follow the prescription by hand.",
     confirmApply: "Apply? (originals are backed up to .ctxmedic/backups)",
     consultTitle: "🩺 ctxmedic consultation",
