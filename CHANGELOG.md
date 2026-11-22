@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.2.1](https://github.com/ponomarenko/ctxmedic/compare/v0.2.0...v0.2.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **deps:** upgrade zod to 4 ([#43](https://github.com/ponomarenko/ctxmedic/issues/43)) ([b4eefb3](https://github.com/ponomarenko/ctxmedic/commit/b4eefb3f2c635f719641d2837a459fee4b19ab8a))
+
+
+### Documentation
+
+* pin the GitHub Action to v0 in the README ([#42](https://github.com/ponomarenko/ctxmedic/issues/42)) ([088fa65](https://github.com/ponomarenko/ctxmedic/commit/088fa654e6cd49b35e3698814bbc2d14f40cfdb3))
+
+
+### Continuous Integration
+
+* fix the major tag step and allow re-publishing a release ([#40](https://github.com/ponomarenko/ctxmedic/issues/40)) ([1110feb](https://github.com/ponomarenko/ctxmedic/commit/1110febf6e69624c8512aaf8bafb32e90020c261))
+
+
+### Build System
+
+* Bump vite from 6.4.6 to 8.3.8 ([#38](https://github.com/ponomarenko/ctxmedic/issues/38)) ([06396bc](https://github.com/ponomarenko/ctxmedic/commit/06396bc19bd3ffe793d9dd11a7409806ebef04ee))
+* Bump vitest from 2.1.9 to 4.1.11 ([#39](https://github.com/ponomarenko/ctxmedic/issues/39)) ([33787ae](https://github.com/ponomarenko/ctxmedic/commit/33787aeceffaaf72ac02f26a0dd6b67808d63d7c))
+
 ## [0.2.0](https://github.com/ponomarenko/ctxmedic/compare/v0.1.0...v0.2.0) (2026-11-22)
 
 
