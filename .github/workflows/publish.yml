@@ -15,12 +15,14 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # release-please tags and creates releases
+      pull-requests: write # release-please opens the release PR
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -62,6 +64,8 @@ jobs:
     needs: release
     if: needs.release.outputs.release_created
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # pushes the moved major tag
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Move the major tag

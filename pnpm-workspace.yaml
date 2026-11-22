@@ -2,3 +2,6 @@ packages:
   - "packages/*"
 allowBuilds:
   esbuild: true
+overrides:
+  # GHSA for esbuild < 0.28.1 (dev server file read on Windows); dev-only, keeps Scorecard clean.
+  esbuild: ">=0.28.1"
