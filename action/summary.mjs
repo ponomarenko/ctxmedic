@@ -15,7 +15,7 @@ if (!["critical", "warning"].includes(failOn)) {
 const r = JSON.parse(fs.readFileSync(file, "utf8"));
 const ICON = { resuscitation: "🔴", therapy: "🟡", preventive: "🟢" };
 const LEVEL = { resuscitation: "error", therapy: "warning", preventive: "notice" };
-const cell = (s) => String(s ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
+const cell = (s) => String(s ?? "").replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\n/g, " ");
 const prop = (s) => String(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A").replace(/:/g, "%3A").replace(/,/g, "%2C");
 const msg = (s) => String(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
 

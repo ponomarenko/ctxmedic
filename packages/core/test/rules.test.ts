@@ -71,6 +71,13 @@ describe("helpers", () => {
     expect(findSecrets(t)).toHaveLength(2);
     expect(redactSecrets(t)).not.toContain("Zq8vN3pL0aR7tY2mK9sD4fH6");
   });
+  it("secrets scan stays linear on a hostile file", () => {
+    const t = "-".repeat(200_000);
+    const start = performance.now();
+    findSecrets(t);
+    redactSecrets(t);
+    expect(performance.now() - start).toBeLessThan(1000); // the quadratic regex took ~30 s here
+  });
 });
 
 describe("duplicates", () => {
