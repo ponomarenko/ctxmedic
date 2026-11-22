@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ponomarenko/ctxmedic@main # pin a release tag once one includes the action
+      - uses: ponomarenko/ctxmedic@v0 # or pin an exact release, e.g. @v0.2.0
         with:
           fail-on: critical # or "warning" to fail on 🟡 too
           # path: .        # project folder
