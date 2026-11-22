@@ -40,9 +40,16 @@ export const Anamnesis = z.object({
 });
 export type Anamnesis = z.infer<typeof Anamnesis>;
 
+/** Scan flags that change the score; visits are compared only when these match (ADR-017). */
+export const ScanSettings = z.object({ global: z.boolean(), finops: z.boolean(), days: z.number() });
+export type ScanSettings = z.infer<typeof ScanSettings>;
+export const DEFAULT_SCAN: ScanSettings = { global: true, finops: true, days: 30 };
+
 export const Visit = z.object({
   at: z.string(),
   root: z.string(),
+  /** Missing in history written by v0.1.0: those runs are assumed to use the defaults. */
+  scan: ScanSettings.default(DEFAULT_SCAN),
   healthScore: z.number(),
   counts: Counts,
   monthlySpendUsd: z.number().optional(),

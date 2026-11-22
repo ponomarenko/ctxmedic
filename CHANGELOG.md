@@ -4,6 +4,7 @@
 
 - `ctxmedic restore` undoes a fix from its backup.
 - The CLI version comes from `package.json` at build time.
+- History compares only visits scanned with the same `--no-global`, `--no-finops` and `--days` (fixes fake "+N since the last visit" jumps).
 
 ## 0.1.0 — 2026-11-22
 

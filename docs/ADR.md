@@ -111,3 +111,13 @@ record and need `--force`.
 Restore only touches paths inside the project root and backup copies inside
 the backup folder, so a tampered manifest cannot write elsewhere. Folders a
 fix created (for example `.ai/`) are left in place, empty, after restore.
+
+## ADR-017 History compares like with like
+Each `Visit` stores its `scan` settings (`global`, `finops`, `days`;
+`ScanSettings` in `packages/clinical/src/schema.ts`). "Since the last visit"
+and the UI trend use only visits with the same settings (`sameScan` in
+`store.ts`), so a `--no-global` run cannot create a fake jump in the trend of
+full runs. `days` counts only when session logs were analyzed. `ctxmedic
+history` still lists every visit and tags non-default ones with their flags.
+History written by v0.1.0 has no settings and loads as default runs, the most
+common case, so existing trends continue.

@@ -2,7 +2,7 @@ import { applyFix, examine, FixRefusedError, type Finding, type FinOpsReport, ty
 import { analyze } from "@ctxmedic/finops";
 import { harnesses } from "@ctxmedic/harnesses";
 import { cards, t } from "./i18n.js";
-import { Anamnesis, ClinicalReport, type ClinicalDiagnosis, type Lang, type Triage } from "./schema.js";
+import { Anamnesis, ClinicalReport, type ClinicalDiagnosis, type Lang, type ScanSettings, type Triage } from "./schema.js";
 import { healthGain, healthScore } from "./score.js";
 import { loadAnamnesis, loadHistory, recordVisit } from "./store.js";
 
@@ -77,6 +77,13 @@ export interface CheckupOptions {
   record?: boolean;
 }
 
+/** The flags of a checkup that change its score, with the same defaults `checkup` uses. */
+export const scanSettings = (opts: Pick<CheckupOptions, "global" | "finops" | "days">): ScanSettings => ({
+  global: opts.global !== false,
+  finops: opts.finops !== false,
+  days: opts.days ?? 30,
+});
+
 export async function checkup(opts: CheckupOptions): Promise<ClinicalReport> {
   const ex = await examine(opts.root, harnesses, { global: opts.global });
   let finops: FinOpsReport | null = null;
@@ -87,7 +94,8 @@ export async function checkup(opts: CheckupOptions): Promise<ClinicalReport> {
   const counts = { resuscitation: 0, therapy: 0, preventive: 0 };
   for (const d of diagnoses) counts[d.triage]++;
   const savings = findings.reduce((n, f) => n + (f.monthlySavingsUsd ?? 0), 0);
-  const previous = loadHistory(ex.vitals.root).at(-1) ?? null;
+  const scan = scanSettings(opts);
+  const previous = loadHistory(ex.vitals.root, scan).at(-1) ?? null;
   const report = ClinicalReport.parse({
     tool: "ctxmedic",
     version: VERSION,
@@ -106,6 +114,7 @@ export async function checkup(opts: CheckupOptions): Promise<ClinicalReport> {
     recordVisit({
       at: report.generatedAt,
       root: ex.vitals.root,
+      scan,
       healthScore: score,
       counts,
       monthlySpendUsd: finops?.monthlyRunRateUsd,

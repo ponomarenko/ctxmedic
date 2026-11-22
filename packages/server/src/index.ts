@@ -4,7 +4,7 @@ import path from "node:path";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
-import { checkup, loadHistory, resolveLang, treat, type Lang } from "@ctxmedic/clinical";
+import { checkup, loadHistory, resolveLang, scanSettings, treat, type Lang } from "@ctxmedic/clinical";
 import { examine, FixRefusedError, similarity } from "@ctxmedic/core";
 import { harnesses } from "@ctxmedic/harnesses";
 
@@ -33,7 +33,8 @@ export function createApp(opts: ServerOptions & { token: string }) {
     return c.json(await checkup({ root, lang, days: opts.days, record: c.req.query("record") === "1" }));
   });
 
-  app.get("/api/history", (c) => c.json(loadHistory(root)));
+  // Only visits scanned like /api/checkup scans, so the chart shows no fake jumps (ADR-017).
+  app.get("/api/history", (c) => c.json(loadHistory(root, scanSettings({ days: opts.days }))));
 
   /** Nodes and edges for the dependency graph: files per harness, symlinks, duplicates. */
   app.get("/api/graph", async (c) => {

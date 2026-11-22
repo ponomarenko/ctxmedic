@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
-import { ClinicalReport } from "@ctxmedic/clinical";
+import { checkup, ClinicalReport } from "@ctxmedic/clinical";
 import { createApp } from "@ctxmedic/server";
 
 const token = "test-token";
@@ -50,6 +50,13 @@ describe("server", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ dryRun: true });
     expect(snapshot()).toEqual(before);
+  });
+
+  it("GET /api/history only returns visits scanned like the UI scans", async () => {
+    await checkup({ root, lang: "en", global: false });
+    await app.request("/api/checkup?record=1");
+    const visits = (await (await app.request("/api/history")).json()) as { scan: { global: boolean } }[];
+    expect(visits.map((v) => v.scan.global)).toEqual([true]);
   });
 
   it("unknown RX returns 409", async () => {

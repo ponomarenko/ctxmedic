@@ -1,5 +1,5 @@
 import pc from "picocolors";
-import { t, type ClinicalDiagnosis, type ClinicalReport, type Lang, type Visit } from "@ctxmedic/clinical";
+import { DEFAULT_SCAN, t, type ClinicalDiagnosis, type ClinicalReport, type Lang, type Visit } from "@ctxmedic/clinical";
 import type { FinOpsReport } from "@ctxmedic/core";
 
 const COLOR = { resuscitation: pc.red, therapy: pc.yellow, preventive: pc.green } as const;
@@ -76,10 +76,16 @@ export function report(r: ClinicalReport): string {
   return [header(r), ...r.diagnoses.map((d) => card(d, r.lang) + "\n"), r.finops ? finopsSummary(r.finops, r.lang) : ""].join("\n");
 }
 
+/** CLI flags of a non-default scan, so rows that are not comparable are visible. */
+const scanFlags = ({ scan: s }: Visit) => {
+  const f = [!s.global && "--no-global", !s.finops && "--no-finops", s.finops && s.days !== DEFAULT_SCAN.days && `--days ${s.days}`].filter(Boolean);
+  return f.length ? pc.yellow(`  ${f.join(" ")}`) : "";
+};
+
 export function history(visits: Visit[]): string {
   if (!visits.length) return pc.dim("No visits yet. Run `ctxmedic checkup`.");
   return visits
     .slice(-20)
-    .map((v) => `${v.at.slice(0, 16).replace("T", " ")}  ${bar(v.healthScore)} ${String(v.healthScore).padStart(3)}  🔴${v.counts.resuscitation} 🟡${v.counts.therapy} 🟢${v.counts.preventive}  ${pc.dim(v.root)}`)
+    .map((v) => `${v.at.slice(0, 16).replace("T", " ")}  ${bar(v.healthScore)} ${String(v.healthScore).padStart(3)}  🔴${v.counts.resuscitation} 🟡${v.counts.therapy} 🟢${v.counts.preventive}  ${pc.dim(v.root)}${scanFlags(v)}`)
     .join("\n");
 }

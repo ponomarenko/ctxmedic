@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Finding } from "@ctxmedic/core";
-import { checkup, diagnose, healthScore, loadHistory, resolveLang, treat } from "@ctxmedic/clinical";
+import { checkup, DEFAULT_SCAN, diagnose, healthScore, loadHistory, resolveLang, scanSettings, treat } from "@ctxmedic/clinical";
 
 const f = (ruleId: Finding["ruleId"], severity: Finding["severity"], extra: Partial<Finding> = {}): Finding => ({ ruleId, severity, message: ruleId, files: [], data: {}, ...extra });
 
@@ -47,5 +47,40 @@ describe("checkup + treat", () => {
     expect(r2.healthScore).toBeGreaterThan(r1.healthScore);
     expect(r2.previous?.healthScore).toBe(r1.healthScore);
     expect(loadHistory(fs.realpathSync(root)).length + loadHistory(root).length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("history compares like with like", () => {
+  let root: string;
+  beforeEach(() => {
+    process.env.CTXMEDIC_HOME = fs.mkdtempSync(path.join(os.tmpdir(), "ctxmedic-home-"));
+    root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "ctxmedic-proj-")));
+    fs.writeFileSync(path.join(root, ".cursorrules"), "Use TypeScript strict mode everywhere.");
+  });
+
+  it("a --no-global run does not change the trend of full runs", async () => {
+    const full = await checkup({ root, lang: "en", finops: false });
+    const partial = await checkup({ root, lang: "en", finops: false, global: false });
+    expect(partial.previous).toBeNull();
+    const again = await checkup({ root, lang: "en", finops: false });
+    expect(again.previous?.at).toBe(full.generatedAt);
+    expect(loadHistory(root, scanSettings({ finops: false })).map((v) => v.at)).toEqual([full.generatedAt, again.generatedAt]);
+    expect(loadHistory(root)).toHaveLength(3);
+  });
+
+  it("ignores --days when session logs were not analyzed", async () => {
+    const a = await checkup({ root, lang: "en", finops: false, days: 7 });
+    expect((await checkup({ root, lang: "en", finops: false, days: 90 })).previous?.at).toBe(a.generatedAt);
+    expect(loadHistory(root, scanSettings({ days: 7 }))).toHaveLength(0);
+  });
+
+  it("loads v0.1.0 entries without scan settings as default runs", async () => {
+    const home = path.join(process.env.CTXMEDIC_HOME!, ".ctxmedic");
+    fs.mkdirSync(home, { recursive: true });
+    const old = { at: "2026-11-01T00:00:00.000Z", root, healthScore: 50, counts: { resuscitation: 0, therapy: 1, preventive: 0 }, potentialMonthlySavingsUsd: 0 };
+    fs.writeFileSync(path.join(home, "history.json"), JSON.stringify([old]));
+    expect(loadHistory(root)[0]!.scan).toEqual(DEFAULT_SCAN);
+    expect((await checkup({ root, lang: "en" })).previous?.healthScore).toBe(50);
+    expect((await checkup({ root, lang: "en", global: false })).previous).toBeNull();
   });
 });
