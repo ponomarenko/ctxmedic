@@ -3,7 +3,7 @@ import { mcpServers, type Finding, type ScannedFile } from "@ctxmedic/core";
 import { costOf, lighterModel, priceOf } from "./pricing.js";
 import type { SessionStats } from "./parsers.js";
 
-export const MCP_SCHEMA_TOKENS = 1_500; // per server, when the real schema size is unknown (ADR-005)
+export const MCP_SCHEMA_TOKENS = 1_500; // per server, when the logs do not record its tool definitions (ADR-018)
 export const SNOWBALL_STEPS = 35;
 export const SNOWBALL_HEAVY_STEPS = 10;
 export const CACHE_HIT_MIN = 0.4;
@@ -42,14 +42,17 @@ export function unusedMcp({ sessions, days, files, root }: DetectorInput): Findi
       // One finding per config file: a list of idle servers reads better than one card each.
       const idle = Object.keys(mcpServers(f.path, f.text, root)).filter((name) => !calls[name] && !calls[name.replace(/[^\w]/g, "_")]);
       if (!idle.length) continue;
-      const schemaTokens = MCP_SCHEMA_TOKENS * idle.length;
+      // Real size from the logs when a session recorded the server's tool definitions (ADR-018).
+      const measured = idle.map((name) => Math.max(0, ...hs.map((s) => s.mcpSchemaTokens?.[name] ?? s.mcpSchemaTokens?.[name.replace(/[^\w]/g, "_")] ?? 0)) || null);
+      const schemaTokens = measured.reduce<number>((n, t) => n + (t ?? MCP_SCHEMA_TOKENS), 0);
+      const estimated = measured.some((t) => t === null);
       const usd = monthly((schemaTokens * steps * priceOf(model).price.cacheRead) / 1e6, days);
       out.push({
         ruleId: "FIN_UNUSED_MCP",
         severity: sev(usd),
         message: `${idle.length} MCP server(s) in ${f.rel} were called 0 times in ${days} days across ${steps.toLocaleString("en")} requests: ${idle.join(", ")}`,
         files: [f.rel],
-        data: { server: idle.join(", "), harness: hid, scope: f.scope, steps, schemaTokens, days },
+        data: { server: idle.join(", "), harness: hid, scope: f.scope, steps, schemaTokens, estimated, days },
         monthlySavingsUsd: round(usd),
       });
     }

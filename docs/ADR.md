@@ -121,3 +121,20 @@ full runs. `days` counts only when session logs were analyzed. `ctxmedic
 history` still lists every visit and tags non-default ones with their flags.
 History written by v0.1.0 has no settings and loads as default runs, the most
 common case, so existing trends continue.
+
+## ADR-018 Measured MCP schema sizes
+`FIN_UNUSED_MCP` prices the tool definitions an idle MCP server adds to every
+request. The parsers now measure them from the logs, without starting any
+server:
+- Claude Code: `api-request-shape` lines carry `shape.tools`, the definitions
+  sent with each request. Tools named `mcp__<server>__*` are grouped per server.
+- Codex: `response_item` lines with `payload.type: "additional_tools"` hold one
+  `mcp__<server>` namespace per server.
+
+Each server's definitions are counted with `countTokens` on their JSON; a
+session keeps the largest size seen, and the detector takes the largest across
+sessions. A server never seen in the logs falls back to `MCP_SCHEMA_TOKENS`
+(1,500). The finding's `data.estimated` is `false` only when every idle server
+was measured, and the card says which one was used. The parse cache moved to
+`v: 3` so old aggregates are re-parsed. Tools that Claude Code defers (loaded
+on demand) are not in `shape.tools` and are not priced.

@@ -1,4 +1,5 @@
 import type { Finding, RuleId } from "@ctxmedic/core";
+import { MCP_SCHEMA_TOKENS } from "@ctxmedic/finops";
 import { Lang, type Triage } from "./schema.js";
 
 export interface CardText {
@@ -104,7 +105,8 @@ const en: Messages = {
     },
     FIN_UNUSED_MCP: {
       name: "Toxic MCP Syndrome",
-      prognosis: (f) => `~${n(d(f, "schemaTokens"))} tokens of tool schemas in every request for a server nobody calls.`,
+      prognosis: (f) =>
+        `${n(d(f, "schemaTokens"))} tokens of tool schemas (${d(f, "estimated") === false ? "measured from session logs" : `estimated at ${n(MCP_SCHEMA_TOKENS)} per server`}) in every request for a server nobody calls.`,
       action: (f) =>
         d(f, "scope") === "global"
           ? `Move "${d(f, "server")}" from the global config into the project-level MCP config of the projects that need it.`

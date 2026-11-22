@@ -5,7 +5,7 @@ import type { SessionStats } from "./parsers.js";
 
 // Bump `v` whenever SessionStats or a parser changes, so stale aggregates are re-parsed.
 interface CacheFile {
-  v: 2;
+  v: 3;
   files: Record<string, { mtimeMs: number; size: number; stats: SessionStats }>;
 }
 
@@ -14,11 +14,11 @@ const file = () => path.join(stateDir(), "cache.json");
 export function loadCache(): CacheFile {
   try {
     const c = JSON.parse(fs.readFileSync(file(), "utf8"));
-    if (c?.v === 2 && c.files) return c;
+    if (c?.v === 3 && c.files) return c;
   } catch {
     /* missing or corrupt cache: start over */
   }
-  return { v: 2, files: {} };
+  return { v: 3, files: {} };
 }
 
 export function saveCache(c: CacheFile): void {

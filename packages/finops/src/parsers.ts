@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
+import { countTokens } from "@ctxmedic/core";
 import { costOf } from "./pricing.js";
 
 export interface Usage {
@@ -20,6 +21,8 @@ export interface SessionStats {
   steps: number;
   models: Record<string, Usage>;
   mcpCalls: Record<string, number>;
+  /** Tokens of tool definitions per MCP server, measured from the log (largest seen in the session). */
+  mcpSchemaTokens: Record<string, number>;
   compactions: number;
   maxContext: number;
   /** Steps whose prompt context exceeded SNOWBALL_CONTEXT, and the tokens above the healthy baseline. */
@@ -33,7 +36,7 @@ export const HEALTHY_CONTEXT = 40_000;
 const MCP = /^mcp__(.+?)(?:__|$)/;
 
 function blank(file: string, harness: SessionStats["harness"]): SessionStats {
-  return { file, harness, steps: 0, models: {}, mcpCalls: {}, compactions: 0, maxContext: 0, heavySteps: 0, heavyExcessTokens: 0 };
+  return { file, harness, steps: 0, models: {}, mcpCalls: {}, mcpSchemaTokens: {}, compactions: 0, maxContext: 0, heavySteps: 0, heavyExcessTokens: 0 };
 }
 
 function addStep(s: SessionStats, model: string, u: { input: number; output: number; cacheRead: number; cacheWrite: number; cacheWrite1h?: number }) {
@@ -55,6 +58,13 @@ const mcp = (s: SessionStats, name: unknown): boolean => {
   if (m) s.mcpCalls[m[1]!] = (s.mcpCalls[m[1]!] ?? 0) + 1;
   return Boolean(m);
 };
+
+const server = (name: unknown) => (typeof name === "string" ? MCP.exec(name)?.[1] : undefined);
+
+/** Records the size of each MCP server's tool definitions; keeps the largest seen (servers can add tools mid-session). */
+function schemas(s: SessionStats, defs: Record<string, unknown[]>) {
+  for (const [name, d] of Object.entries(defs)) s.mcpSchemaTokens[name] = Math.max(s.mcpSchemaTokens[name] ?? 0, countTokens(JSON.stringify(d)));
+}
 
 async function* lines(file: string): AsyncGenerator<any> {
   const rl = readline.createInterface({ input: fs.createReadStream(file), crlfDelay: Infinity });
@@ -81,6 +91,15 @@ export async function parseClaude(file: string): Promise<SessionStats> {
   for await (const l of lines(file)) {
     stamp(s, l.timestamp);
     if ((l.type === "system" && l.subtype === "compact_boundary") || l.isCompactSummary) s.compactions++;
+    // The request shape lists the tool definitions sent with every request.
+    if (l.type === "api-request-shape" && Array.isArray(l.shape?.tools)) {
+      const defs: Record<string, unknown[]> = {};
+      for (const t of l.shape.tools) {
+        const name = server(t?.name);
+        if (name) (defs[name] ??= []).push(t);
+      }
+      schemas(s, defs);
+    }
     if (l.type !== "assistant" || !l.message?.usage) continue;
     const msg = l.message;
     if (msg.model === "<synthetic>") continue;
@@ -109,6 +128,9 @@ export async function parseCodex(file: string): Promise<SessionStats> {
     const p = l.payload ?? {};
     if (l.type === "turn_context" && typeof p.model === "string") model = p.model;
     else if (l.type === "compacted") s.compactions++;
+    else if (l.type === "response_item" && p.type === "additional_tools" && Array.isArray(p.tools))
+      // Each MCP server is one `mcp__<server>` namespace holding its tool definitions.
+      schemas(s, Object.fromEntries(p.tools.flatMap((ns: any) => (ns?.type === "namespace" && server(ns.name) ? [[server(ns.name)!, ns.tools ?? []]] : []))));
     else if (l.type === "response_item" && /function_call|custom_tool_call|mcp_tool_call/.test(p.type ?? "")) mcp(s, p.namespace) || mcp(s, p.name);
     else if (l.type === "event_msg" && p.type === "token_count" && p.info?.last_token_usage) {
       const total = p.info.total_token_usage?.total_tokens ?? -2;

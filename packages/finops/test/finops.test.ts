@@ -2,9 +2,10 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { examine } from "@ctxmedic/core";
+import { countTokens, examine } from "@ctxmedic/core";
 import { harnesses } from "@ctxmedic/harnesses";
-import { analyze, costOf, loadCache, parseClaude, parseCodex } from "@ctxmedic/finops";
+import { analyze, costOf, loadCache, loadSessions, MCP_SCHEMA_TOKENS, parseClaude, parseCodex, unusedMcp } from "@ctxmedic/finops";
+import { diagnose } from "@ctxmedic/clinical";
 
 const now = new Date("2026-11-20T12:00:00Z");
 const ts = (i: number) => new Date(now.getTime() - 86_400_000 + i * 1000).toISOString();
@@ -70,5 +71,48 @@ describe("analyze", () => {
     expect(r.costUsd).toBeGreaterThan(0);
     expect(r.potentialMonthlySavingsUsd).toBeGreaterThan(0);
     expect(Object.keys(loadCache().files)).toHaveLength(5);
+  });
+});
+
+describe("MCP schema sizes", () => {
+  const jiraTools = [
+    { name: "mcp__jira__search", description: "Search Jira issues with JQL and return matching keys.", input_schema: { type: "object", properties: { jql: { type: "string" } } } },
+    { name: "mcp__jira__create", description: "Create a Jira issue.", input_schema: { type: "object", properties: { summary: { type: "string" } } } },
+  ];
+  const write = (rel: string, lines: unknown[]) => {
+    const p = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "ctxmedic-log-")), rel);
+    fs.writeFileSync(p, lines.map((l) => JSON.stringify(l)).join("\n"));
+    return p;
+  };
+
+  it("Claude: measures tool definitions per server from api-request-shape", async () => {
+    const shape = { type: "api-request-shape", shape: { system: [], tools: [{ name: "Read", description: "x".repeat(500), input_schema: {} }, ...jiraTools] } };
+    const small = { type: "api-request-shape", shape: { tools: jiraTools.slice(0, 1) } };
+    const s = await parseClaude(write("s.jsonl", [small, shape]));
+    expect(Object.keys(s.mcpSchemaTokens)).toEqual(["jira"]);
+    expect(s.mcpSchemaTokens.jira).toBe(countTokens(JSON.stringify(jiraTools)));
+  });
+
+  it("Codex: measures each mcp__<server> namespace in additional_tools", async () => {
+    const tools = [
+      { type: "namespace", name: "functions", tools: [{ type: "custom", name: "exec" }] },
+      { type: "namespace", name: "mcp__jira", tools: jiraTools },
+    ];
+    const s = await parseCodex(write("rollout-x.jsonl", [{ type: "response_item", payload: { type: "additional_tools", role: "developer", tools } }]));
+    expect(s.mcpSchemaTokens).toEqual({ jira: countTokens(JSON.stringify(jiraTools)) });
+  });
+
+  it("FIN_UNUSED_MCP uses the measured size and falls back to the estimate", async () => {
+    const ex = await examine(root, harnesses);
+    const sessions = await loadSessions(30, now);
+    const base = unusedMcp({ sessions, days: 30, files: ex.files, root })[0]!;
+    expect(base.data).toMatchObject({ server: "jira", schemaTokens: MCP_SCHEMA_TOKENS, estimated: true });
+
+    const measured = sessions.map((s) => (s.harness === "claude-code" ? { ...s, mcpSchemaTokens: { jira: 4_321 } } : s));
+    const f = unusedMcp({ sessions: measured, days: 30, files: ex.files, root })[0]!;
+    expect(f.data).toMatchObject({ schemaTokens: 4_321, estimated: false });
+    expect(f.monthlySavingsUsd!).toBeGreaterThan(base.monthlySavingsUsd!);
+    expect(diagnose([f], "en")[0]!.prognosis).toContain("measured from session logs");
+    expect(diagnose([base], "en")[0]!.prognosis).toContain("estimated at 1,500 per server");
   });
 });
