@@ -1,7 +1,10 @@
 ctxmedic
-Copyright (c) 2026 Vitaliy Ponomarenko (https://github.com/ponomarenko)
+Copyright (c) 2026 Vitalii Ponomarenko (also known as Vitaliy Ponomarenko, https://github.com/ponomarenko)
 
-This product was originally designed and written by Vitaliy Ponomarenko.
+This product was originally designed and written by Vitalii Ponomarenko.
+The author's legal name, as written in the passport, is PONOMARENKO VITALII.
+"Vitaliy Ponomarenko" is an alternative spelling of the same person, used in
+earlier commits and publications.
 Source: https://github.com/ponomarenko/ctxmedic
 Package: https://www.npmjs.com/package/ctxmedic
 
@@ -9,7 +12,7 @@ Licensed under the Functional Source License, Version 1.1, MIT Future License
 (FSL-1.1-MIT). See LICENSE. Each version converts to the MIT license on the
 second anniversary of its release.
 
-"ctxmedic" and the ctxmedic logo are trademarks of Vitaliy Ponomarenko.
+"ctxmedic" and the ctxmedic logo are trademarks of Vitalii Ponomarenko.
 See TRADEMARKS.md.
 
 Redistributions, forks and derivative works must keep this NOTICE file and

@@ -4,7 +4,7 @@ Thank you for contributing to ctxmedic. This agreement protects you, the
 project, and its users. By opening a pull request, you agree to these terms
 for every Contribution you submit, now and in the future.
 
-**Project owner ("Licensor"):** Vitaliy Ponomarenko (https://github.com/ponomarenko)
+**Project owner ("Licensor"):** Vitalii Ponomarenko (also known as Vitaliy Ponomarenko, https://github.com/ponomarenko)
 
 ## 1. Definitions
 

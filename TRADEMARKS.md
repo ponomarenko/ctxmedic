@@ -1,7 +1,7 @@
 # Trademark Policy
 
 "ctxmedic", the ctxmedic logo, and the clinical persona branding ("the
-context medic", Health Score cards) are trademarks of Vitaliy Ponomarenko
+context medic", Health Score cards) are trademarks of Vitalii Ponomarenko
 (https://github.com/ponomarenko). The source code license (FSL-1.1-MIT, and
 later MIT) does **not** grant rights to these marks.
 
@@ -18,12 +18,12 @@ later MIT) does **not** grant rights to these marks.
   "ctxmedic" or a confusingly similar name (for example `ctx-medic`,
   `ctxmedic-pro`);
 - ship a modified build under the ctxmedic name;
-- use the marks in a way that suggests endorsement by Vitaliy Ponomarenko;
+- use the marks in a way that suggests endorsement by Vitalii Ponomarenko;
 - use the marks in a logo or brand of your own.
 
 ## Forks
 
 Forks are welcome under the LICENSE. Rename the fork and its binary, and say
-"based on ctxmedic by Vitaliy Ponomarenko".
+"based on ctxmedic by Vitalii Ponomarenko".
 
 To request permission, contact https://github.com/ponomarenko.

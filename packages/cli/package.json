@@ -4,7 +4,7 @@
   "description": "The context medic for your AI coding setup: checkup, treat, savings for Claude Code, Cursor, Windsurf, Codex CLI, OpenCode, Cline and Copilot.",
   "type": "module",
   "license": "FSL-1.1-MIT",
-  "author": "Vitaliy Ponomarenko <https://github.com/ponomarenko>",
+  "author": "Vitalii Ponomarenko <https://github.com/ponomarenko>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ponomarenko/ctxmedic.git",

@@ -82,7 +82,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) and [docs/ADR.md](./docs/ADR.md).
 
 ## License
 
-[FSL-1.1-MIT](./LICENSE) © 2026 [Vitaliy Ponomarenko](https://github.com/ponomarenko).
+[FSL-1.1-MIT](./LICENSE) © 2026 [Vitalii Ponomarenko](https://github.com/ponomarenko).
 Free for internal use, education and research; each release becomes MIT two
 years after it ships. Commercial and team terms: [LICENSE_COMMERCIAL.md](./LICENSE_COMMERCIAL.md).
 "ctxmedic" is a trademark: [TRADEMARKS.md](./TRADEMARKS.md).

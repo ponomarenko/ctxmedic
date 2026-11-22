@@ -4,7 +4,7 @@ ctxmedic Community Edition (the CLI and the local Web UI) is source-available
 under [FSL-1.1-MIT](./LICENSE). It is free for internal use, education,
 research and professional services.
 
-You need a commercial license from Vitaliy Ponomarenko if you want to:
+You need a commercial license from Vitalii Ponomarenko if you want to:
 
 - offer ctxmedic, or a product built on it, as a **competing** commercial
   product or hosted service (see "Competing Use" in the LICENSE);
@@ -26,4 +26,4 @@ details) with:
 2. the intended use;
 3. the number of developers or seats.
 
-Licensor: Vitaliy Ponomarenko (https://github.com/ponomarenko)
+Licensor: Vitalii Ponomarenko (also known as Vitaliy Ponomarenko, https://github.com/ponomarenko)
