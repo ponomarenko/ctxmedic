@@ -1,3 +1,4 @@
+import path from "node:path";
 import { mcpServers, type Finding, type ScannedFile } from "@ctxmedic/core";
 import { costOf, lighterModel, priceOf } from "./pricing.js";
 import type { SessionStats } from "./parsers.js";
@@ -38,18 +39,19 @@ export function unusedMcp({ sessions, days, files, root }: DetectorInput): Findi
       if (!hs.length) continue; // no evidence for this harness
       const steps = hs.reduce((n, s) => n + s.steps, 0);
       const model = dominant(hs) ?? "claude-sonnet-5-5";
-      for (const name of Object.keys(mcpServers(f.path, f.text, root))) {
-        if (calls[name] || calls[name.replace(/[^\w]/g, "_")]) continue;
-        const usd = monthly((MCP_SCHEMA_TOKENS * steps * priceOf(model).price.cacheRead) / 1e6, days);
-        out.push({
-          ruleId: "FIN_UNUSED_MCP",
-          severity: sev(usd),
-          message: `MCP server "${name}" (${f.rel}) was called 0 times in ${days} days across ${steps.toLocaleString("en")} requests`,
-          files: [f.rel],
-          data: { server: name, harness: hid, scope: f.scope, steps, schemaTokens: MCP_SCHEMA_TOKENS, days },
-          monthlySavingsUsd: round(usd),
-        });
-      }
+      // One finding per config file: a list of idle servers reads better than one card each.
+      const idle = Object.keys(mcpServers(f.path, f.text, root)).filter((name) => !calls[name] && !calls[name.replace(/[^\w]/g, "_")]);
+      if (!idle.length) continue;
+      const schemaTokens = MCP_SCHEMA_TOKENS * idle.length;
+      const usd = monthly((schemaTokens * steps * priceOf(model).price.cacheRead) / 1e6, days);
+      out.push({
+        ruleId: "FIN_UNUSED_MCP",
+        severity: sev(usd),
+        message: `${idle.length} MCP server(s) in ${f.rel} were called 0 times in ${days} days across ${steps.toLocaleString("en")} requests: ${idle.join(", ")}`,
+        files: [f.rel],
+        data: { server: idle.join(", "), harness: hid, scope: f.scope, steps, schemaTokens, days },
+        monthlySavingsUsd: round(usd),
+      });
     }
   }
   return out;
@@ -99,7 +101,7 @@ export function contextSnowball({ sessions, days }: DetectorInput): Finding[] {
       ruleId: "FIN_CONTEXT_SNOWBALL",
       severity: sev(usd),
       message: `${bad.length} session(s) ran >${SNOWBALL_STEPS} steps with 100k+ context and no /clear or /compact`,
-      files: bad.slice(0, 5).map((s) => s.file),
+      files: bad.slice(0, 5).map((s) => `session ${path.basename(s.file, ".jsonl")}`),
       data: { sessions: bad.length, worstSteps: worst.steps, worstMaxContext: worst.maxContext, days },
       monthlySavingsUsd: round(usd),
     },

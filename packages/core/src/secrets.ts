@@ -14,7 +14,8 @@ const PATTERNS: [string, RegExp][] = [
   ["Stripe key", /\b(?:sk|rk)_live_[A-Za-z0-9]{20,}/g],
 ];
 // Generic KEY/TOKEN/SECRET assignments (JSON, TOML, env) with a long opaque value.
-const GENERIC = /["']?([A-Z0-9_]*(?:API_KEY|TOKEN|SECRET|PASSWORD)[A-Z0-9_]*)["']?\s*[:=]\s*["']([^"'\s$]{16,})["']/gi;
+// The key must END with the keyword, so names like "firstTokenDate" do not match.
+const GENERIC = /["']?([A-Za-z0-9_-]*(?:api[_-]?key|token|secret|password|passwd))["']?\s*[:=]\s*["']([^"'\s$]{16,})["']/gi;
 
 export const mask = (s: string) => (s.length <= 8 ? "****" : `${s.slice(0, 6)}…${s.slice(-2)} (${s.length} chars)`);
 

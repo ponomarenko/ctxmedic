@@ -30,7 +30,7 @@ export interface SessionStats {
 export const SNOWBALL_CONTEXT = 100_000;
 export const HEALTHY_CONTEXT = 40_000;
 
-const MCP = /^mcp__(.+?)__/;
+const MCP = /^mcp__(.+?)(?:__|$)/;
 
 function blank(file: string, harness: SessionStats["harness"]): SessionStats {
   return { file, harness, steps: 0, models: {}, mcpCalls: {}, compactions: 0, maxContext: 0, heavySteps: 0, heavyExcessTokens: 0 };
@@ -50,9 +50,10 @@ function addStep(s: SessionStats, model: string, u: { input: number; output: num
   if (ctx > SNOWBALL_CONTEXT) s.heavySteps++, (s.heavyExcessTokens += ctx - HEALTHY_CONTEXT);
 }
 
-const mcp = (s: SessionStats, name: unknown) => {
+const mcp = (s: SessionStats, name: unknown): boolean => {
   const m = typeof name === "string" && MCP.exec(name);
   if (m) s.mcpCalls[m[1]!] = (s.mcpCalls[m[1]!] ?? 0) + 1;
+  return Boolean(m);
 };
 
 async function* lines(file: string): AsyncGenerator<any> {
@@ -108,7 +109,7 @@ export async function parseCodex(file: string): Promise<SessionStats> {
     const p = l.payload ?? {};
     if (l.type === "turn_context" && typeof p.model === "string") model = p.model;
     else if (l.type === "compacted") s.compactions++;
-    else if (l.type === "response_item" && /function_call|custom_tool_call|mcp_tool_call/.test(p.type ?? "")) mcp(s, p.name);
+    else if (l.type === "response_item" && /function_call|custom_tool_call|mcp_tool_call/.test(p.type ?? "")) mcp(s, p.namespace) || mcp(s, p.name);
     else if (l.type === "event_msg" && p.type === "token_count" && p.info?.last_token_usage) {
       const total = p.info.total_token_usage?.total_tokens ?? -2;
       if (total === lastTotal) continue; // repeated rate-limit refresh, not a new step

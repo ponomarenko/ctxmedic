@@ -30,6 +30,8 @@ export const ClinicalDiagnosis = z.object({
 });
 export type ClinicalDiagnosis = z.infer<typeof ClinicalDiagnosis>;
 
+const Counts = z.object({ resuscitation: z.number(), therapy: z.number(), preventive: z.number() });
+
 export const Anamnesis = z.object({
   priority: z.enum(["economy", "balanced", "quality"]).default("balanced"),
   primaryHarness: z.string().optional(),
@@ -41,7 +43,7 @@ export const Visit = z.object({
   at: z.string(),
   root: z.string(),
   healthScore: z.number(),
-  counts: z.record(Triage, z.number()),
+  counts: Counts,
   monthlySpendUsd: z.number().optional(),
   potentialMonthlySavingsUsd: z.number(),
 });
@@ -56,7 +58,7 @@ export const ClinicalReport = z.object({
   healthScore: z.number().min(0).max(100),
   previous: Visit.nullable(),
   opinion: z.string(),
-  counts: z.record(Triage, z.number()),
+  counts: Counts,
   diagnoses: z.array(ClinicalDiagnosis),
   finops: FinOpsReport.nullable(),
   potentialMonthlySavingsUsd: z.number(),

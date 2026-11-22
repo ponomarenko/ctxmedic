@@ -60,7 +60,7 @@ const en: Record<RuleId, CardText> = {
     prognosis: (f) => `~${n(d(f, "schemaTokens"))} tokens of tool schemas in every request for a server nobody calls.`,
     action: (f) =>
       d(f, "scope") === "global"
-        ? `Move "${d(f, "server")}" from the global config into the .mcp.json of the projects that need it.`
+        ? `Move "${d(f, "server")}" from the global config into the project-level MCP config of the projects that need it.`
         : `Remove "${d(f, "server")}" from ${f.files[0]} or disable it until needed.`,
   },
   FIN_MODEL_OVERKILL: {
@@ -128,7 +128,7 @@ const uk: Record<RuleId, CardText> = {
     prognosis: (f) => `~${n(d(f, "schemaTokens"))} токенів схем інструментів у кожному запиті до сервера, який ніхто не викликає.`,
     action: (f) =>
       d(f, "scope") === "global"
-        ? `Перенесіть "${d(f, "server")}" з глобального конфігу в .mcp.json тих проєктів, яким він потрібен.`
+        ? `Перенесіть "${d(f, "server")}" з глобального конфігу у проєктний MCP-конфіг тих проєктів, яким він потрібен.`
         : `Видаліть "${d(f, "server")}" з ${f.files[0]} або вимкніть, доки не знадобиться.`,
   },
   FIN_MODEL_OVERKILL: {

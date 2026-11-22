@@ -3,8 +3,9 @@ import path from "node:path";
 import { stateDir } from "@ctxmedic/core";
 import type { SessionStats } from "./parsers.js";
 
+// Bump `v` whenever SessionStats or a parser changes, so stale aggregates are re-parsed.
 interface CacheFile {
-  v: 1;
+  v: 2;
   files: Record<string, { mtimeMs: number; size: number; stats: SessionStats }>;
 }
 
@@ -13,11 +14,11 @@ const file = () => path.join(stateDir(), "cache.json");
 export function loadCache(): CacheFile {
   try {
     const c = JSON.parse(fs.readFileSync(file(), "utf8"));
-    if (c?.v === 1 && c.files) return c;
+    if (c?.v === 2 && c.files) return c;
   } catch {
     /* missing or corrupt cache: start over */
   }
-  return { v: 1, files: {} };
+  return { v: 2, files: {} };
 }
 
 export function saveCache(c: CacheFile): void {
