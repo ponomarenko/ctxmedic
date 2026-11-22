@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/ponomarenko/ctxmedic/compare/v0.2.1...v0.2.2) (2026-11-22)
+
+
+### Build System
+
+* Bump @anthropic-ai/sdk from 0.70.1 to 1.11.0 ([#36](https://github.com/ponomarenko/ctxmedic/issues/36)) ([fa21984](https://github.com/ponomarenko/ctxmedic/commit/fa21984dbac8aa25a1619c393dafed481461de60))
+
 ## [0.2.1](https://github.com/ponomarenko/ctxmedic/compare/v0.2.0...v0.2.1) (2026-11-22)
 
 
