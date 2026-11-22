@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { Finding, FinOpsReport, PatientVitals, RuleId } from "@ctxmedic/core";
 
-export const Lang = z.enum(["en", "uk"]);
+// Supported interface languages. To add one: add its code here and a `Messages` catalog in i18n.ts (ADR-015).
+export const Lang = z.enum(["en"]);
 export type Lang = z.infer<typeof Lang>;
 
 export const Triage = z.enum(["resuscitation", "therapy", "preventive"]);

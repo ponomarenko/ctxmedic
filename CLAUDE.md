@@ -16,7 +16,7 @@ presented as a doctor's checkup. Author: Vitalii Ponomarenko. License: FSL-1.1-M
 | `packages/core` | Zod contracts (`schema.ts`), scanner, parsers, tokens, 7 rules (`rules/`), `applyFix`, `examine` |
 | `packages/harnesses` | declarative profiles of supported tools (paths, syntax, logs) |
 | `packages/finops` | session-log parsers, price table, 4 cost detectors, parse cache |
-| `packages/clinical` | diagnoses, `RX-NN` prescriptions, Health Score, history, en/uk text, `consult --ai` |
+| `packages/clinical` | diagnoses, `RX-NN` prescriptions, Health Score, history, message catalogs (`i18n.ts`), `consult --ai` |
 | `packages/cli` | the only published package (`ctxmedic`); bundles all internal packages |
 | `packages/server` | Hono API for the UI |
 | `packages/ui` | React + Vite + Tailwind + React Flow SPA |
@@ -42,7 +42,9 @@ real `~` in tests.
 - Fixes go through `applyFix`: backup, git-dirty check, no writes outside the root.
 - The UI server binds to `127.0.0.1`; write routes require the per-run token.
 - A new rule needs: the rule in `core/src/rules/`, a card in `clinical/src/i18n.ts`
-  (en and uk), a fixture test.
+  (`en` catalog), a fixture test.
 - Record new design decisions in `docs/ADR.md`; mark known limits in code as
   `shortcut: <limit>, <when to upgrade>`.
 - Node 20+ only, no native dependencies.
+- English only: code, comments, docs, issues, CLI and UI text (ADR-015). User-facing
+  strings live in message catalogs, never inline, so more languages can be added later.

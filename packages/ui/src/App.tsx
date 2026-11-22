@@ -3,7 +3,6 @@ import { Background, Controls, ReactFlow, type Edge, type Node } from "@xyflow/r
 import { Activity, CircleDollarSign, GitBranch, HeartPulse, Languages, Loader2, RefreshCw, Stethoscope, Wrench } from "lucide-react";
 import type { ClinicalDiagnosis, ClinicalReport, Visit } from "@ctxmedic/clinical";
 
-type Lang = "en" | "uk";
 type Tab = "dashboard" | "diagnoses" | "finops" | "graph";
 interface GraphData {
   nodes: { id: string; kind: string; label: string; tokens?: number; broken?: boolean }[];
@@ -12,14 +11,16 @@ interface GraphData {
 
 const token = new URLSearchParams(location.hash.slice(1)).get("token") ?? "";
 const usd = (n: number) => `$${n.toFixed(2)}`;
+// UI strings per language. To add one, add a catalog here (keys are checked against `en`) and in packages/clinical/src/i18n.ts.
 const L = {
   en: { dashboard: "Dashboard", diagnoses: "Diagnoses", finops: "FinOps", graph: "Graph", health: "Health Score", savings: "Potential savings", spend: "Spend", runRate: "Run rate", cache: "Cache hit", treat: "Treat", dry: "Preview", trend: "Recovery dynamics", none: "No complaints. The patient is healthy.", noLogs: "No session logs found.", prognosis: "Prognosis", rx: "Prescription", manual: "Manual treatment", model: "Model", cost: "Cost", requests: "Requests", mo: "/mo" },
-  uk: { dashboard: "Огляд", diagnoses: "Діагнози", finops: "FinOps", graph: "Граф", health: "Індекс здоров'я", savings: "Потенційна економія", spend: "Витрати", runRate: "Темп", cache: "Кеш", treat: "Лікувати", dry: "Попередній перегляд", trend: "Динаміка одужання", none: "Скарг немає. Пацієнт здоровий.", noLogs: "Логів сесій не знайдено.", prognosis: "Прогноз", rx: "Рецепт", manual: "Ручне лікування", model: "Модель", cost: "Вартість", requests: "Запити", mo: "/міс" },
-};
+} satisfies Record<string, Record<string, string>>;
+type Lang = keyof typeof L;
+const LANGS = Object.keys(L) as Lang[];
 const TRIAGE = {
-  resuscitation: { dot: "bg-red-500", ring: "border-red-500/40", label: { en: "Resuscitation", uk: "Реанімація" } },
-  therapy: { dot: "bg-amber-500", ring: "border-amber-500/40", label: { en: "Therapy", uk: "Терапія" } },
-  preventive: { dot: "bg-emerald-500", ring: "border-emerald-500/40", label: { en: "Preventive", uk: "Профілактика" } },
+  resuscitation: { dot: "bg-red-500", ring: "border-red-500/40", label: { en: "Resuscitation" } },
+  therapy: { dot: "bg-amber-500", ring: "border-amber-500/40", label: { en: "Therapy" } },
+  preventive: { dot: "bg-emerald-500", ring: "border-emerald-500/40", label: { en: "Preventive" } },
 } as const;
 
 const scoreColor = (s: number) => (s >= 90 ? "text-emerald-500" : s >= 70 ? "text-amber-500" : "text-red-500");
@@ -146,7 +147,7 @@ function Graph({ data }: { data: GraphData }) {
 }
 
 export function App() {
-  const [lang, setLang] = useState<Lang>(() => (navigator.language.startsWith("uk") ? "uk" : "en"));
+  const [lang, setLang] = useState<Lang>(() => LANGS.find((l) => navigator.language.startsWith(l)) ?? "en");
   const [tab, setTab] = useState<Tab>("dashboard");
   const [report, setReport] = useState<ClinicalReport | null>(null);
   const [history, setHistory] = useState<Visit[]>([]);
@@ -201,7 +202,7 @@ export function App() {
           <p className="truncate text-sm text-slate-500">{report?.patient.root}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setLang(lang === "en" ? "uk" : "en")} className="flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700" aria-label="Switch language"><Languages size={14} />{lang.toUpperCase()}</button>
+          {LANGS.length > 1 && <button onClick={() => setLang(LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length]!)} className="flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700" aria-label="Switch language"><Languages size={14} />{lang.toUpperCase()}</button>}
           <button onClick={() => load(true)} disabled={busy} className="flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700" aria-label="Re-run checkup">{busy ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}</button>
         </div>
       </header>

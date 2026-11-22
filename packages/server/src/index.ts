@@ -4,7 +4,7 @@ import path from "node:path";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
-import { checkup, loadHistory, treat, type Lang } from "@ctxmedic/clinical";
+import { checkup, loadHistory, resolveLang, treat, type Lang } from "@ctxmedic/clinical";
 import { examine, FixRefusedError, similarity } from "@ctxmedic/core";
 import { harnesses } from "@ctxmedic/harnesses";
 
@@ -29,7 +29,7 @@ export function createApp(opts: ServerOptions & { token: string }) {
   });
 
   app.get("/api/checkup", async (c) => {
-    const lang = (c.req.query("lang") === "uk" ? "uk" : c.req.query("lang") === "en" ? "en" : opts.lang) as Lang;
+    const lang = c.req.query("lang") ? resolveLang(c.req.query("lang")) : opts.lang;
     return c.json(await checkup({ root, lang, days: opts.days, record: c.req.query("record") === "1" }));
   });
 

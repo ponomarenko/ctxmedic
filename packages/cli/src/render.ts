@@ -44,11 +44,11 @@ export function card(d: ClinicalDiagnosis, lang: Lang): string {
 
 export function finopsSummary(f: FinOpsReport, lang: Lang): string {
   const tx = t(lang);
-  if (!f.sessions) return pc.dim(lang === "uk" ? "Логів сесій не знайдено: FinOps-аналіз пропущено." : "No session logs found: FinOps analysis skipped.");
+  if (!f.sessions) return pc.dim(tx.noLogs);
   const top = f.byModel.slice(0, 4).map((m) => `${m.model} ${usd(m.costUsd)}`).join(pc.dim(" · "));
   return [
     `${pc.bold("FinOps")} ${pc.dim(`(${f.periodDays}d, ${f.sessions} sessions, ${f.steps.toLocaleString("en")} requests, prices as of ${f.pricingAsOf})`)}`,
-    `  ${lang === "uk" ? "Витрати" : "Spend"}: ${pc.bold(usd(f.costUsd))}  ·  ${lang === "uk" ? "темп" : "run rate"} ${usd(f.monthlyRunRateUsd)}${tx.perMonth}  ·  cache hit ${f.cacheHitRatio === null ? "n/a" : `${Math.round(f.cacheHitRatio * 100)}%`}`,
+    `  ${tx.spend}: ${pc.bold(usd(f.costUsd))}  ·  ${tx.runRate} ${usd(f.monthlyRunRateUsd)}${tx.perMonth}  ·  cache hit ${f.cacheHitRatio === null ? "n/a" : `${Math.round(f.cacheHitRatio * 100)}%`}`,
     top ? `  ${top}` : "",
   ]
     .filter(Boolean)

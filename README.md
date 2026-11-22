@@ -41,7 +41,7 @@ npx ctxmedic checkup
 | `ctxmedic history` | Health Score over time. |
 | `ctxmedic ui` | Local Web UI on `127.0.0.1`: dashboard, diagnoses, FinOps, config graph. |
 
-Common options: `--lang en|uk`, `--days 30`, `--no-finops`, `--no-global`.
+Common options: `--days 30`, `--no-finops`, `--no-global`.
 
 ## Diagnoses
 

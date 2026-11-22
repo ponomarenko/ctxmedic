@@ -40,6 +40,7 @@ user passes `--global`.
 ## ADR-007 Localization
 A plain dictionary per language (`en`, `uk`) in `packages/clinical/src/i18n.ts`,
 selected by `--lang` or `CTXMEDIC_LANG`. No i18n library.
+**Superseded by ADR-015.**
 
 ## ADR-008 Privacy
 No telemetry, no network calls, except `consult --ai`, which the user asks
@@ -79,3 +80,21 @@ tests and CI can run against fixture homes. ctxmedic's own state lives in
 Not built in v0.1. The seam is the `Rule` and `Detector` registries plus the
 JSON report: a future paid edition can add rule packs and consume reports
 without changing the core.
+
+## ADR-015 English is the project language; more languages later
+All code, docs, CLI output, reports and the Web UI are English only. This keeps
+one source of truth, and English text costs several times fewer tokens than
+Cyrillic when agents read the repository.
+
+The seam for more languages stays:
+- `Lang` in `packages/clinical/src/schema.ts` lists supported codes (only `en`).
+- `packages/clinical/src/i18n.ts` holds one `Messages` catalog per language
+  (diagnosis cards, report text, CLI prompts). TypeScript fails the build if a
+  catalog misses a key.
+- `packages/ui/src/App.tsx` has its own `L` catalog; the language switch only
+  shows when there is more than one language.
+- `--lang` and `CTXMEDIC_LANG` still exist; unknown codes fall back to English.
+
+To add a language: add its code to `Lang`, a `Messages` catalog, and an `L`
+entry in the UI. The Ukrainian catalog from v0.1 is in git history (commit
+`9fed11c`) if it is needed again.

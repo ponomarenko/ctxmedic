@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { Finding } from "@ctxmedic/core";
-import { checkup, diagnose, healthScore, loadHistory, treat } from "@ctxmedic/clinical";
+import { checkup, diagnose, healthScore, loadHistory, resolveLang, treat } from "@ctxmedic/clinical";
 
 const f = (ruleId: Finding["ruleId"], severity: Finding["severity"], extra: Partial<Finding> = {}): Finding => ({ ruleId, severity, message: ruleId, files: [], data: {}, ...extra });
 
@@ -17,11 +17,15 @@ describe("health score", () => {
     expect(healthScore(many)).toBe(0);
   });
   it("orders by triage and numbers prescriptions", () => {
-    const dx = diagnose([f("INFO_UNSUPPORTED_SYNTAX", "info"), f("CRIT_SECRET_LEAK", "critical")], "uk");
+    const dx = diagnose([f("INFO_UNSUPPORTED_SYNTAX", "info"), f("CRIT_SECRET_LEAK", "critical")], "en");
     expect(dx.map((d) => d.rx.id)).toEqual(["RX-01", "RX-02"]);
     expect(dx[0]!.triage).toBe("resuscitation");
-    expect(dx[0]!.diagnosis).toBe("Кровотеча облікових даних");
+    expect(dx[0]!.diagnosis).toBe("Credential Hemorrhage");
     expect(dx[0]!.rx.healthGain).toBe(25);
+  });
+  it("falls back to English for unsupported languages", () => {
+    expect(resolveLang("uk")).toBe("en");
+    expect(resolveLang("EN-us")).toBe("en");
   });
 });
 

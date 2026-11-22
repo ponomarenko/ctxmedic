@@ -11,9 +11,10 @@ import {
   detectProvider,
   loadAnamnesis,
   loadHistory,
+  messages,
   resolveLang,
   saveAnamnesis,
-
+  t,
   VERSION,
   type Anamnesis,
   type Lang,
@@ -34,7 +35,7 @@ interface Common {
 
 const common = (cmd: Command) =>
   cmd
-    .option("--lang <lang>", "interface language: en | uk")
+    .option("--lang <lang>", "interface language (only en for now)")
     .option("--days <n>", "how many days of session logs to analyze", "30")
     .option("--no-finops", "skip session-log (cost) analysis")
     .option("--no-global", "skip global configs in the home directory");
@@ -79,12 +80,13 @@ common(program.command("treat [rx]").description("apply a prescription (e.g. RX-
     if (!picked.length) fail(new FixRefusedError(o.all ? "nothing to auto-fix" : `${rx} not found; run \`ctxmedic checkup\``));
     for (const d of picked) console.log(render.card(d, c.lang) + "\n");
     const manual = picked.filter((d) => !d.rx.autoFix);
-    if (manual.length === picked.length) return console.log(pc.yellow(c.lang === "uk" ? "Автофіксу немає: виконайте рецепт вручну." : "No auto-fix: follow the prescription by hand."));
+    const m = messages(c.lang).cli;
+    if (manual.length === picked.length) return console.log(pc.yellow(m.noAutoFix));
     const plans = picked.flatMap((d) => (d.finding.fix ? [d.finding.fix as FixPlan] : []));
     for (const plan of plans) for (const op of plan.ops) console.log(pc.dim(`  ${op.kind === "write" ? "write  " : "symlink"} ${path.relative(c.root, op.path)}${op.kind === "symlink" ? ` → ${op.target}` : ""}`));
     if (!o.dryRun && !o.yes) {
-      const ok = await p.confirm({ message: c.lang === "uk" ? "Застосувати? (оригінали буде збережено в .ctxmedic/backups)" : "Apply? (originals are backed up to .ctxmedic/backups)" });
-      if (p.isCancel(ok) || !ok) return p.cancel("Cancelled");
+      const ok = await p.confirm({ message: m.confirmApply });
+      if (p.isCancel(ok) || !ok) return p.cancel(m.cancelled);
     }
     for (const plan of plans) {
       const res = await applyFix(plan, { root: c.root, dryRun: o.dryRun, force: o.force, global: false }).catch(fail);
@@ -109,64 +111,55 @@ common(program.command("consult [path]").description("interactive appointment: a
   .option("--ai", "ask an LLM (local Ollama, or your Anthropic/OpenAI key) to look for contradictions")
   .action(async (dir: string | undefined, o: Common & { ai?: boolean }) => {
     const c = ctx(dir, o);
-    const uk = c.lang === "uk";
-    p.intro(pc.bold(uk ? "🩺 Прийом у ctxmedic" : "🩺 ctxmedic consultation"));
+    const m = messages(c.lang).cli;
+    p.intro(pc.bold(m.consultTitle));
     const prev = loadAnamnesis();
     const priority = await p.select({
-      message: uk ? "Що для вас важливіше?" : "What matters most to you?",
+      message: m.askPriority,
       initialValue: prev.priority,
-      options: [
-        { value: "economy", label: uk ? "Економія токенів і грошей" : "Saving tokens and money" },
-        { value: "balanced", label: uk ? "Баланс" : "Balanced" },
-        { value: "quality", label: uk ? "Максимальна якість відповідей" : "Maximum answer quality" },
-      ],
+      options: (["economy", "balanced", "quality"] as const).map((value) => ({ value, label: m.priority[value] })),
     });
-    if (p.isCancel(priority)) return p.cancel("Cancelled");
+    if (p.isCancel(priority)) return p.cancel(m.cancelled);
     const primaryHarness = await p.select({
-      message: uk ? "Ваш основний інструмент?" : "Your main AI tool?",
+      message: m.askHarness,
       initialValue: prev.primaryHarness ?? "claude-code",
       options: harnesses.map((h) => ({ value: h.id, label: h.name })),
     });
-    if (p.isCancel(primaryHarness)) return p.cancel("Cancelled");
+    if (p.isCancel(primaryHarness)) return p.cancel(m.cancelled);
     const budget = await p.text({
-      message: uk ? "Місячний бюджет на AI, $ (порожньо — без ліміту)" : "Monthly AI budget in $ (empty = no limit)",
+      message: m.askBudget,
       initialValue: prev.monthlyBudgetUsd?.toString() ?? "",
-      validate: (v) => (v && !(Number(v) >= 0) ? (uk ? "Введіть число" : "Enter a number") : undefined),
+      validate: (v) => (v && !(Number(v) >= 0) ? m.enterNumber : undefined),
     });
-    if (p.isCancel(budget)) return p.cancel("Cancelled");
-    const a: Anamnesis = { priority: priority as Anamnesis["priority"], primaryHarness: primaryHarness as string, monthlyBudgetUsd: budget ? Number(budget) : undefined };
+    if (p.isCancel(budget)) return p.cancel(m.cancelled);
+    const a: Anamnesis = { priority, primaryHarness, monthlyBudgetUsd: budget ? Number(budget) : undefined };
     saveAnamnesis(a);
 
     const s = p.spinner();
-    s.start(uk ? "Обстежуємо пацієнта" : "Examining the patient");
+    s.start(m.examining);
     const r = await checkup(c).catch(fail);
-    s.stop(`${uk ? "Індекс здоров'я" : "Health Score"}: ${r.healthScore}/100`);
+    s.stop(`${t(c.lang).health}: ${r.healthScore}/100`);
     const course = r.diagnoses.filter((d) => !a.primaryHarness || !d.finding.data.harness || d.finding.data.harness === a.primaryHarness || d.triage === "resuscitation").slice(0, 5);
-    p.note(course.map((d, i) => `${i + 1}. ${d.rx.id} ${d.diagnosis}: ${d.rx.action}${d.rx.command ? `\n   → ${d.rx.command}` : ""}`).join("\n") || r.opinion, uk ? "Курс лікування" : "Treatment plan");
+    p.note(course.map((d, i) => `${i + 1}. ${d.rx.id} ${d.diagnosis}: ${d.rx.action}${d.rx.command ? `\n   → ${d.rx.command}` : ""}`).join("\n") || r.opinion, m.treatmentPlan);
     if (a.monthlyBudgetUsd !== undefined && r.finops?.sessions) {
       const over = r.finops.monthlyRunRateUsd - a.monthlyBudgetUsd;
-      p.log.message(over > 0 ? pc.red(`${uk ? "Перевищення бюджету" : "Over budget by"} $${over.toFixed(2)}/mo`) : pc.green(uk ? "У межах бюджету" : "Within budget"));
+      p.log.message(over > 0 ? pc.red(m.overBudget(over)) : pc.green(m.withinBudget));
     }
 
     if (o.ai) {
       const provider = await detectProvider();
-      if (!provider) return p.outro(uk ? "Немає Ollama або ANTHROPIC_API_KEY / OPENAI_API_KEY: AI-консиліум пропущено." : "No Ollama, ANTHROPIC_API_KEY or OPENAI_API_KEY: AI review skipped.");
+      if (!provider) return p.outro(m.noAiProvider);
       const prompt = await buildConsultPrompt(c.root, r);
       if (provider !== "ollama") {
-        const ok = await p.confirm({
-          message: uk
-            ? `Надіслати ${prompt.length.toLocaleString("en")} символів ваших інструкцій (секрети замасковано) до ${provider}?`
-            : `Send ${prompt.length.toLocaleString("en")} characters of your instructions (secrets redacted) to ${provider}?`,
-          initialValue: false,
-        });
-        if (p.isCancel(ok) || !ok) return p.outro(uk ? "Нічого не надіслано." : "Nothing was sent.");
+        const ok = await p.confirm({ message: m.confirmSend(prompt.length, provider), initialValue: false });
+        if (p.isCancel(ok) || !ok) return p.outro(m.nothingSent);
       }
-      s.start(uk ? `Консиліум (${provider})` : `Consulting ${provider}`);
+      s.start(m.consulting(provider));
       const answer = await askAi(provider, prompt).catch((e: Error) => `Error: ${e.message}`);
-      s.stop(uk ? "Висновок консиліуму" : "Second opinion");
+      s.stop(m.secondOpinion);
       console.log(answer);
     }
-    p.outro(uk ? "Одужуйте! Повторний огляд: ctxmedic checkup" : "Get well soon! Follow-up: ctxmedic checkup");
+    p.outro(m.goodbye);
   });
 
 program
