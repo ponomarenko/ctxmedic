@@ -1,10 +1,12 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "packages": {
-    "packages/cli": {
+    ".": {
       "release-type": "node",
       "package-name": "ctxmedic",
-      "changelog-path": "../../CHANGELOG.md",
+      "extra-files": [
+        { "type": "json", "path": "packages/cli/package.json", "jsonpath": "$.version" }
+      ],
       "changelog-sections": [
         { "type": "feat", "section": "Features", "hidden": false },
         { "type": "fix", "section": "Bug Fixes", "hidden": false },
