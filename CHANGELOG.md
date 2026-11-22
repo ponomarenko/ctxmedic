@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/ponomarenko/ctxmedic/compare/v0.2.4...v0.3.0) (2026-11-22)
+
+
+### Features
+
+* **core:** ESLint-style rule configuration ([#50](https://github.com/ponomarenko/ctxmedic/issues/50)) ([a6a564b](https://github.com/ponomarenko/ctxmedic/commit/a6a564bea599d3945a7bd13ac0420a0dfe2bcc34))
+
 ## [0.2.4](https://github.com/ponomarenko/ctxmedic/compare/v0.2.3...v0.2.4) (2026-11-22)
 
 
