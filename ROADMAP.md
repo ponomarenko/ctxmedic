@@ -7,8 +7,8 @@ Milestones only. Each item is a GitHub issue with the full brief; the
 
 The first public version (built and merged in #1).
 
-- [ ] Publish v0.1.0 to npm and create the GitHub release (#2)
-- [ ] Inject the CLI version at build time (#3)
+- [x] Publish v0.1.0 to npm and create the GitHub release (#2)
+- [x] Inject the CLI version at build time (#3)
 
 ## v0.2 Accuracy & Safety
 
