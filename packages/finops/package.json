@@ -9,7 +9,7 @@
   "dependencies": {
     "@ctxmedic/core": "workspace:*",
     "@ctxmedic/harnesses": "workspace:*",
-    "zod": "^3.24.1",
-    "picomatch": "^4.0.2"
+    "picomatch": "^4.0.2",
+    "zod": "^4.6.7"
   }
 }

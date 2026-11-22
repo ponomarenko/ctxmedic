@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { applyFix, examine, findSecrets, redactSecrets, similarity, type Examination } from "@ctxmedic/core";
+import { applyFix, examine, HarnessProfile, findSecrets, redactSecrets, similarity, type Examination } from "@ctxmedic/core";
 import { harnesses } from "@ctxmedic/harnesses";
 
 const shared = Array.from({ length: 40 }, (_, i) => `- Always follow coding convention number ${i} carefully.`).join("\n");
@@ -85,5 +85,13 @@ describe("duplicates", () => {
     expect(fs.readFileSync(path.join(root, "AGENTS.md"), "utf8")).toContain("Only in claude");
     const again = await examine(root, harnesses, { global: false });
     expect(again.findings.some((f) => f.ruleId === "WARN_DUPLICATE_RULES")).toBe(false);
+  });
+});
+
+describe("schema defaults", () => {
+  it("fills nested path sets when a harness omits them", () => {
+    const h = HarnessProfile.parse({ id: "x", name: "X", contextLimit: 1000, files: { instructions: { project: ["AGENTS.md"] } } });
+    expect(h.files.rules).toEqual({ project: [], global: [] });
+    expect(h.files.instructions.global).toEqual([]);
   });
 });

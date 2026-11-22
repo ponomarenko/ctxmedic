@@ -58,7 +58,7 @@ export const Finding = z.object({
   message: z.string(),
   files: z.array(z.string()).default([]),
   /** Raw lab values used by the clinical layer (token counts, ratios, $). */
-  data: z.record(z.unknown()).default({}),
+  data: z.record(z.string(), z.unknown()).default({}),
   monthlySavingsUsd: z.number().nonnegative().optional(),
   fix: FixPlan.optional(),
 });
@@ -79,9 +79,10 @@ export const HarnessProfile = z.object({
   contextLimit: z.number().int().positive(),
   files: z.object({
     instructions: PathSet,
-    rules: PathSet.default({}),
-    skill: PathSet.default({}),
-    mcp: PathSet.default({}),
+    // prefault, not default: zod 4 returns a default as is, without the inner array defaults.
+    rules: PathSet.prefault({}),
+    skill: PathSet.prefault({}),
+    mcp: PathSet.prefault({}),
   }),
   /** Directives this harness understands: "@import", "alwaysApply", "globs", "applyTo", "trigger". */
   syntax: z.array(z.string()).default([]),
@@ -111,7 +112,7 @@ export const PatientVitals = z.object({
   scannedAt: z.string(),
   filesScanned: z.number().int(),
   harnesses: z.array(z.string()),
-  startupTokens: z.record(z.number()),
+  startupTokens: z.record(z.string(), z.number()),
 });
 export type PatientVitals = z.infer<typeof PatientVitals>;
 
@@ -133,9 +134,9 @@ export const FinOpsReport = z.object({
   costUsd: z.number(),
   monthlyRunRateUsd: z.number(),
   cacheHitRatio: z.number().min(0).max(1).nullable(),
-  byHarness: z.record(z.object({ sessions: z.number(), costUsd: z.number() })),
+  byHarness: z.record(z.string(), z.object({ sessions: z.number(), costUsd: z.number() })),
   byModel: z.array(ModelUsage),
-  mcpCalls: z.record(z.number()),
+  mcpCalls: z.record(z.string(), z.number()),
   findings: z.array(Finding),
   potentialMonthlySavingsUsd: z.number(),
   pricingAsOf: z.string(),
