@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/ponomarenko/ctxmedic/compare/v0.3.0...v0.3.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* drop the Anthropic SDK and document what ctxmedic reads ([#52](https://github.com/ponomarenko/ctxmedic/issues/52)) ([7eb3859](https://github.com/ponomarenko/ctxmedic/commit/7eb3859b7b5585ecde2f71b24c49487b140b8d31))
+
 ## [0.3.0](https://github.com/ponomarenko/ctxmedic/compare/v0.2.4...v0.3.0) (2026-11-22)
 
 

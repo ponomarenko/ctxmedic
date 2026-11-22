@@ -1,6 +1,6 @@
 {
   "name": "ctxmedic",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "The context medic for your AI coding setup: checkup, treat, savings for Claude Code, Cursor, Windsurf, Codex CLI, OpenCode, Cline and Copilot.",
   "type": "module",
   "license": "FSL-1.1-MIT",
