@@ -44,6 +44,31 @@ npx ctxmedic checkup
 
 Common options: `--days 30`, `--no-finops`, `--no-global`.
 
+## GitHub Action
+
+Gate pull requests on the health of your AI configs. The action runs
+`ctxmedic checkup --no-global --no-finops`, writes the cards to the job summary,
+annotates the files, and fails the job on 🔴 findings.
+
+```yaml
+# .github/workflows/ctxmedic.yml
+name: ctxmedic
+on: pull_request
+jobs:
+  checkup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ponomarenko/ctxmedic@main # pin a release tag once one includes the action
+        with:
+          fail-on: critical # or "warning" to fail on 🟡 too
+          # path: .        # project folder
+          # version: 0.1.0 # ctxmedic version from npm (default: latest)
+```
+
+Nothing leaves the runner: no telemetry, no network calls besides installing the
+package from npm.
+
 ## Diagnoses
 
 | Code | Diagnosis | Auto-fix |

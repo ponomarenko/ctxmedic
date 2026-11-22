@@ -1,0 +1,41 @@
+name: ctxmedic checkup
+description: Lint AI coding configs (Claude Code, Cursor, Windsurf, Codex CLI, OpenCode, Copilot, Cline) and fail the job on critical findings.
+author: Vitalii Ponomarenko
+branding:
+  icon: activity
+  color: red
+
+inputs:
+  path:
+    description: Project folder to examine, relative to the workspace.
+    default: "."
+  fail-on:
+    description: "Fail the job on `critical` findings (🔴) or on `warning` and worse (🔴 and 🟡)."
+    default: critical
+  lang:
+    description: Report language (only `en` for now).
+    default: en
+  version:
+    description: ctxmedic version from npm, for example `0.1.0`. Pin it for reproducible builds.
+    default: latest
+
+runs:
+  using: composite
+  steps:
+    - name: ctxmedic checkup
+      shell: bash
+      # Inputs go through env, never into the script text, so they cannot inject shell code.
+      env:
+        CTXMEDIC_PATH: ${{ inputs.path }}
+        CTXMEDIC_FAIL_ON: ${{ inputs.fail-on }}
+        CTXMEDIC_LANG: ${{ inputs.lang }}
+        CTXMEDIC_VERSION: ${{ inputs.version }}
+      run: |
+        report="$RUNNER_TEMP/ctxmedic-report.json"
+        set +e
+        npx --yes "ctxmedic@$CTXMEDIC_VERSION" checkup "$CTXMEDIC_PATH" --no-global --no-finops --json --lang "$CTXMEDIC_LANG" > "$report"
+        code=$?
+        set -e
+        # 0 = healthy, 1 = critical findings (still a valid report); anything else is a crash.
+        if [ "$code" -gt 1 ]; then exit "$code"; fi
+        node "$GITHUB_ACTION_PATH/action/summary.mjs" "$report"
