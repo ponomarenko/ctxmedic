@@ -45,11 +45,13 @@ export function card(d: ClinicalDiagnosis, lang: Lang): string {
 export function finopsSummary(f: FinOpsReport, lang: Lang): string {
   const tx = t(lang);
   if (!f.sessions) return pc.dim(tx.noLogs);
-  const top = f.byModel.slice(0, 4).map((m) => `${m.model} ${usd(m.costUsd)}`).join(pc.dim(" · "));
+  const top = f.byModel.slice(0, 4).map((m) => `${m.model} ${m.estimated ? "≈" : ""}${usd(m.costUsd)}`).join(pc.dim(" · "));
+  const estimated = f.byModel.some((m) => m.estimated);
   return [
     `${pc.bold("FinOps")} ${pc.dim(`(${f.periodDays}d, ${f.sessions} sessions, ${f.steps.toLocaleString("en")} requests, prices as of ${f.pricingAsOf})`)}`,
     `  ${tx.spend}: ${pc.bold(usd(f.costUsd))}  ·  ${tx.runRate} ${usd(f.monthlyRunRateUsd)}${tx.perMonth}  ·  cache hit ${f.cacheHitRatio === null ? "n/a" : `${Math.round(f.cacheHitRatio * 100)}%`}`,
     top ? `  ${top}` : "",
+    estimated ? pc.dim(`  ${tx.estimatedPrice}`) : "",
   ]
     .filter(Boolean)
     .join("\n");

@@ -25,6 +25,7 @@ export interface Messages {
     noLogs: string;
     spend: string;
     runRate: string;
+    estimatedPrice: string;
   };
   cli: {
     noBackups: string;
@@ -150,6 +151,7 @@ const en: Messages = {
     noLogs: "No session logs found: FinOps analysis skipped.",
     spend: "Spend",
     runRate: "run rate",
+    estimatedPrice: "≈ model not in the price table: estimated at Sonnet-class rates",
   },
   cli: {
     noBackups: "No backups in .ctxmedic/backups: nothing to restore.",

@@ -13,7 +13,7 @@ const token = new URLSearchParams(location.hash.slice(1)).get("token") ?? "";
 const usd = (n: number) => `$${n.toFixed(2)}`;
 // UI strings per language. To add one, add a catalog here (keys are checked against `en`) and in packages/clinical/src/i18n.ts.
 const L = {
-  en: { dashboard: "Dashboard", diagnoses: "Diagnoses", finops: "FinOps", graph: "Graph", health: "Health Score", savings: "Potential savings", spend: "Spend", runRate: "Run rate", cache: "Cache hit", treat: "Treat", dry: "Preview", trend: "Recovery dynamics", none: "No complaints. The patient is healthy.", noLogs: "No session logs found.", prognosis: "Prognosis", rx: "Prescription", manual: "Manual treatment", model: "Model", cost: "Cost", requests: "Requests", mo: "/mo" },
+  en: { dashboard: "Dashboard", diagnoses: "Diagnoses", finops: "FinOps", graph: "Graph", health: "Health Score", savings: "Potential savings", spend: "Spend", runRate: "Run rate", cache: "Cache hit", treat: "Treat", dry: "Preview", trend: "Recovery dynamics", none: "No complaints. The patient is healthy.", noLogs: "No session logs found.", prognosis: "Prognosis", rx: "Prescription", manual: "Manual treatment", model: "Model", cost: "Cost", requests: "Requests", mo: "/mo", estimatedPrice: "≈ model not in the price table: estimated at Sonnet-class rates" },
 } satisfies Record<string, Record<string, string>>;
 type Lang = keyof typeof L;
 const LANGS = Object.keys(L) as Lang[];
@@ -269,13 +269,14 @@ export function App() {
                         <tr key={m.model} className="border-t border-slate-100 dark:border-slate-800">
                           <td className="py-1.5 font-mono text-xs">{m.model}</td>
                           <td className="text-right tabular-nums">{m.steps.toLocaleString("en")}</td>
-                          <td className="text-right tabular-nums">{usd(m.costUsd)}</td>
+                          <td className="text-right tabular-nums" title={m.estimated ? t.estimatedPrice : undefined}>{m.estimated && "≈"}{usd(m.costUsd)}</td>
                           <td className="pl-3"><div className="h-2 rounded bg-sky-500" style={{ width: `${(m.costUsd / (f.byModel[0]?.costUsd || 1)) * 100}%` }} /></td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                   <p className="mt-2 text-xs text-slate-500">Prices as of {f.pricingAsOf}. Token counts come from local session logs; nothing leaves this machine.</p>
+                  {f.byModel.some((m) => m.estimated) && <p className="text-xs text-amber-600">{t.estimatedPrice}</p>}
                 </Panel>
                 {report.diagnoses.filter((d) => d.code.startsWith("FIN_")).map((d) => <Card key={d.rx.id} d={d} lang={lang} onTreat={onTreat} />)}
               </>

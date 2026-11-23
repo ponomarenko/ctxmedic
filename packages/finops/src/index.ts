@@ -2,7 +2,7 @@ import { applyConfig, FinOpsReport, findFiles, type CtxmedicConfig, type Scanned
 import { cachedParse, loadCache, saveCache } from "./cache.js";
 import { detectors } from "./detectors.js";
 import { LOG_SOURCES, type SessionStats } from "./parsers.js";
-import { PRICING_AS_OF } from "./pricing.js";
+import { PRICING_AS_OF, priceOf } from "./pricing.js";
 
 export * from "./pricing.js";
 export * from "./parsers.js";
@@ -34,7 +34,7 @@ export async function loadSessions(days: number, now = new Date()): Promise<Sess
 }
 
 export function buildReport(sessions: SessionStats[], { days = 30, root, files, config }: AnalyzeOptions): FinOpsReport {
-  const byModel = new Map<string, { model: string; steps: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number }>();
+  const byModel = new Map<string, { model: string; steps: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number; estimated: boolean }>();
   const byHarness: Record<string, { sessions: number; costUsd: number }> = {};
   const mcpCalls: Record<string, number> = {};
   let cost = 0;
@@ -47,7 +47,7 @@ export function buildReport(sessions: SessionStats[], { days = 30, root, files, 
     steps += s.steps;
     for (const [k, n] of Object.entries(s.mcpCalls)) mcpCalls[k] = (mcpCalls[k] ?? 0) + n;
     for (const [model, u] of Object.entries(s.models)) {
-      const m = byModel.get(model) ?? { model, steps: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0 };
+      const m = byModel.get(model) ?? { model, steps: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, estimated: priceOf(model).estimated };
       m.steps += u.steps;
       m.inputTokens += u.input;
       m.outputTokens += u.output;

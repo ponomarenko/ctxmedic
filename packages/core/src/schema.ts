@@ -124,6 +124,8 @@ export const ModelUsage = z.object({
   cacheReadTokens: z.number(),
   cacheWriteTokens: z.number(),
   costUsd: z.number(),
+  /** True when the model is not in the price table and was priced with the fallback rate. */
+  estimated: z.boolean(),
 });
 export type ModelUsage = z.infer<typeof ModelUsage>;
 

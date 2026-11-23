@@ -4,7 +4,7 @@ import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { countTokens, examine } from "@ctxmedic/core";
 import { harnesses } from "@ctxmedic/harnesses";
-import { analyze, costOf, loadCache, loadSessions, MCP_SCHEMA_TOKENS, parseClaude, parseCodex, unusedMcp } from "@ctxmedic/finops";
+import { analyze, buildReport, costOf, loadCache, loadSessions, MCP_SCHEMA_TOKENS, parseClaude, parseCodex, unusedMcp } from "@ctxmedic/finops";
 import { diagnose } from "@ctxmedic/clinical";
 
 const now = new Date("2026-11-20T12:00:00Z");
@@ -114,5 +114,17 @@ describe("MCP schema sizes", () => {
     expect(f.monthlySavingsUsd!).toBeGreaterThan(base.monthlySavingsUsd!);
     expect(diagnose([f], "en")[0]!.prognosis).toContain("measured from session logs");
     expect(diagnose([base], "en")[0]!.prognosis).toContain("estimated at 1,500 per server");
+  });
+});
+
+describe("fallback pricing", () => {
+  it("flags an unknown model and prices it at the fallback rate", () => {
+    const u = { input: 1e6, output: 0, cacheRead: 0, cacheWrite: 0 };
+    const known = costOf("claude-sonnet-4-5", u);
+    expect(costOf("gpt-6-luna", u)).toBe(known); // fallback = Sonnet-class
+    const usage = (model: string) => ({ steps: 1, ...u, costUsd: costOf(model, u) });
+    const s = { file: "a", harness: "codex" as const, steps: 2, models: { "gpt-6-luna": usage("gpt-6-luna"), "gpt-5": usage("gpt-5") }, mcpCalls: {}, mcpSchemaTokens: {}, compactions: 0, maxContext: 0, heavySteps: 0, heavyExcessTokens: 0 };
+    const r = buildReport([s], { days: 30, root: os.tmpdir(), files: [] });
+    expect(r.byModel.filter((m) => m.estimated).map((m) => m.model)).toEqual(["gpt-6-luna"]);
   });
 });
