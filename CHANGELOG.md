@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/ponomarenko/ctxmedic/compare/v0.3.3...v0.4.0) (2026-11-23)
+
+
+### Features
+
+* **finops:** flag models priced with the fallback rate ([#59](https://github.com/ponomarenko/ctxmedic/issues/59)) ([8b4c627](https://github.com/ponomarenko/ctxmedic/commit/8b4c62774c4bff00d64f49b874e7207bdd50c5d4))
+
 ## [0.3.3](https://github.com/ponomarenko/ctxmedic/compare/v0.3.2...v0.3.3) (2026-11-23)
 
 
