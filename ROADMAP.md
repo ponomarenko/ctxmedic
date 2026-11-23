@@ -42,6 +42,48 @@ file, levels, options, `ignores`, inline disables, rule `meta` and
 - [ ] Rule ids with namespaces (`plugin/RULE`): open `RuleId`, catalog cards and score weights for external rules
 - [ ] Plugins: load rules from npm packages, opt-in, with a privacy ADR (plugin code can reach the network)
 
+## v0.5 Content diagnostics
+
+Check what instruction files say, not only how big they are. Only deterministic
+checks become rules; semantic judgment stays in `consult --ai`.
+
+- [ ] Stale references: file paths and commands in instruction text that no longer exist (#61)
+- [ ] Toolchain overlap: instructions that restate settings already enforced by ESLint, Prettier, Biome or EditorConfig (#62)
+- [ ] Duplicate instructions inside one file and across files loaded by the same harness (#63)
+- [ ] Off-stack instructions: rules for languages or frameworks the project does not use (#64)
+- [ ] Path-specific instructions written as global (suggest scoped rule files) (#65)
+- [ ] No-effect instructions ("write clean code"), info level (#66)
+- [ ] Token budget by section type (rules, examples, tables, decoration), with trimmable parts flagged (#67)
+- [ ] Skills: per-skill token budget and overlapping skill triggers (#68)
+- [ ] `consult --ai`: ask for contradictions and verbose phrasing, with suggested rewrites (#69)
+
+## v0.6 Session waste
+
+New `FIN_*` detectors that find avoidable token spend in session logs. ctxmedic
+stays a read-only diagnosis; prescriptions name the runtime fix.
+
+- [ ] Repeated reads of the same unchanged file in one session (#70)
+- [ ] The same shell command run three or more times (#71)
+- [ ] Oversized tool output in context (test runners, installs, builds, linters) (#72)
+- [ ] Full-resolution images and screenshots (#73)
+- [ ] The same URL fetched more than once (#74)
+- [ ] The same skill loaded more than once per session (#75)
+- [ ] Large reads carried in the prompt cache: cost of the cache write plus every later cache read until compaction (#76)
+- [ ] Re-reads after compaction (context lost to the summary) (#77)
+- [ ] Measure detector accuracy and savings on a corpus of real sessions and publish the numbers (#78)
+
+## v0.7 Adoption & trust
+
+- [ ] `ctxmedic install <agent>`: add a skill or rule so the agent runs a checkup on request (#79)
+- [ ] `ctxmedic init`: healthy starter instruction files per harness (#80)
+- [ ] `ctxmedic explain <RULE>`: the rule card in the terminal (#81)
+- [ ] `ctxmedic capabilities`: what the build can do (network, writes), with the setting and code that enforce each; a test fails the build if a module can open a network connection (#82)
+- [ ] Security settings (secret masking, write limits) cannot be weakened by a checked-in config; the report names environment overrides (#83)
+- [ ] Status line: Health Score and session cost in the agent's status line (#84)
+- [ ] Terminal trend view of history: score and cost sparklines (#85)
+- [ ] Pre-commit hook recipe (#86)
+- [ ] Documented programmatic API (`checkup`, `examine`) in the published package (#87)
+
 ## Team Edition (commercial)
 
 - [ ] Design the Team / Enterprise edition (#13)
