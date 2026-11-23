@@ -188,3 +188,13 @@ optional, opt-in call; `optionalDependencies` would not help, because npm
 installs them by default. `ANTHROPIC_BASE_URL` still works. The UI typecheck
 now lists `node` types explicitly: it imports types from `@ctxmedic/clinical`,
 and Node types used to arrive only through the SDK's declarations.
+
+## ADR-022 Release PRs through a GitHub App
+release-please opens its release PR with a token from a GitHub App
+(`actions/create-github-app-token`), not `GITHUB_TOKEN`. Events made with
+`GITHUB_TOKEN` start no workflows, so the required `test (20)` and `test (22)`
+checks never ran and every release PR stayed blocked. The App token is
+short-lived and scoped to `contents` and `pull-requests` write on this
+repository. A personal access token would tie releases to one account and expire.
+The App client ID is the `RELEASE_APP_CLIENT_ID` variable; its private key is
+the `RELEASE_APP_PRIVATE_KEY` secret.
