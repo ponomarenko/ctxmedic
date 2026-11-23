@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/ponomarenko/ctxmedic/compare/v0.3.1...v0.3.2) (2026-11-23)
+
+
+### Bug Fixes
+
+* **action:** shorten description to fit the Marketplace limit ([#54](https://github.com/ponomarenko/ctxmedic/issues/54)) ([3178953](https://github.com/ponomarenko/ctxmedic/commit/3178953c139054a7d675de548d6fdd454a88023f))
+
 ## [0.3.1](https://github.com/ponomarenko/ctxmedic/compare/v0.3.0...v0.3.1) (2026-11-22)
 
 
