@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.3](https://github.com/ponomarenko/ctxmedic/compare/v0.3.2...v0.3.3) (2026-11-23)
+
+
+### Continuous Integration
+
+* open release PRs with a GitHub App token so CI runs on them ([#56](https://github.com/ponomarenko/ctxmedic/issues/56)) ([1d6737b](https://github.com/ponomarenko/ctxmedic/commit/1d6737b77765eac9663a29d219c31e344c044176))
+* read the release App client ID from secrets ([#57](https://github.com/ponomarenko/ctxmedic/issues/57)) ([f808356](https://github.com/ponomarenko/ctxmedic/commit/f808356659c6a7cbe74863554dead18cde6b8715))
+
 ## [0.3.2](https://github.com/ponomarenko/ctxmedic/compare/v0.3.1...v0.3.2) (2026-11-23)
 
 
