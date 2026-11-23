@@ -1,5 +1,5 @@
 name: ctxmedic checkup
-description: Lint AI coding configs (Claude Code, Cursor, Windsurf, Codex CLI, OpenCode, Copilot, Cline) and fail the job on critical findings.
+description: Lint AI coding configs (Claude Code, Cursor, Copilot, Codex CLI and more) and fail the job on critical findings.
 author: Vitalii Ponomarenko
 branding:
   icon: activity
