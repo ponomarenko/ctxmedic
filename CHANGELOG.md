@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/ponomarenko/ctxmedic/compare/v0.4.0...v0.4.1) (2026-11-23)
+
+
+### Documentation
+
+* **roadmap:** add content diagnostics, session waste and adoption milestones ([#88](https://github.com/ponomarenko/ctxmedic/issues/88)) ([97e4ef9](https://github.com/ponomarenko/ctxmedic/commit/97e4ef946349f3635a68c033e3c5c2ba19209bfe))
+
 ## [0.4.0](https://github.com/ponomarenko/ctxmedic/compare/v0.3.3...v0.4.0) (2026-11-23)
 
 
