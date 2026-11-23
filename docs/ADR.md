@@ -196,5 +196,5 @@ release-please opens its release PR with a token from a GitHub App
 checks never ran and every release PR stayed blocked. The App token is
 short-lived and scoped to `contents` and `pull-requests` write on this
 repository. A personal access token would tie releases to one account and expire.
-The App client ID is the `RELEASE_APP_CLIENT_ID` variable; its private key is
+The App client ID is the `RELEASE_APP_CLIENT_ID` secret; its private key is
 the `RELEASE_APP_PRIVATE_KEY` secret.
