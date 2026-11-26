@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/ponomarenko/ctxmedic/compare/v0.5.0...v0.5.1) (2026-11-26)
+
+
+### Documentation
+
+* **spec:** reconstruct the missing stages and compare the spec with the build ([#93](https://github.com/ponomarenko/ctxmedic/issues/93)) ([5aa4e45](https://github.com/ponomarenko/ctxmedic/commit/5aa4e45112be92d56561e2359670c2ab9132798c))
+
 ## [0.5.0](https://github.com/ponomarenko/ctxmedic/compare/v0.4.1...v0.5.0) (2026-11-26)
 
 
