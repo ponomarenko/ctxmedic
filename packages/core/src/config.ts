@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import picomatch from "picomatch";
 import { z } from "zod";
+import { PRESET_NAMES, PRESETS } from "./presets.js";
 import { allRuleMeta } from "./rules/index.js";
 import { RuleId, Severity, type Finding, type ScannedFile } from "./schema.js";
 
@@ -15,8 +16,12 @@ export type RuleLevel = z.infer<typeof RuleLevel>;
 export const RuleEntry = z.union([RuleLevel, z.tuple([RuleLevel]), z.tuple([RuleLevel, z.record(z.string(), z.unknown())])]);
 export type RuleEntry = z.infer<typeof RuleEntry>;
 
+export const Preset = z.enum(PRESET_NAMES);
+
 export const CtxmedicConfig = z.object({
   $schema: z.string().optional(),
+  /** Built-in presets applied in order before this file's own `rules` and `ignores`. */
+  extends: z.union([Preset, z.array(Preset)]).optional(),
   rules: z.partialRecord(RuleId, RuleEntry).default({}),
   /** Globs over finding paths (project-relative, or `~/` for global files). */
   ignores: z.array(z.string()).default([]),
@@ -27,6 +32,24 @@ export class ConfigError extends Error {}
 
 export const levelOf = (e: RuleEntry | undefined): RuleLevel => (e === undefined ? "on" : typeof e === "string" ? e : e[0]);
 export const optionsOf = (e: RuleEntry | undefined): Record<string, unknown> => (Array.isArray(e) && e[1]) || {};
+
+/**
+ * Applies `extends`: presets in order, then the file's own settings. A later entry replaces an earlier one,
+ * except that a level alone keeps the earlier options (ESLint does the same). `ignores` add up.
+ */
+export function resolveConfig(c: CtxmedicConfig): CtxmedicConfig {
+  const names = c.extends === undefined ? [] : typeof c.extends === "string" ? [c.extends] : c.extends;
+  const rules: Partial<Record<RuleId, RuleEntry>> = {};
+  const ignores: string[] = [];
+  for (const layer of [...names.map((n) => PRESETS[n]), { rules: c.rules, ignores: c.ignores }]) {
+    for (const [id, entry] of Object.entries(layer.rules) as [RuleId, RuleEntry][]) {
+      const before = optionsOf(rules[id]);
+      rules[id] = !Object.keys(optionsOf(entry)).length && Object.keys(before).length ? [levelOf(entry), before] : entry;
+    }
+    ignores.push(...(layer.ignores ?? []));
+  }
+  return { ...c, rules, ignores };
+}
 
 /** One rule as `ctxmedic rules` shows it: its meta plus what the config made of it. */
 export const RuleInfo = z.object({
@@ -72,6 +95,7 @@ export function configJsonSchema(): Record<string, unknown> {
     });
   const editorConfig = z.object({
     $schema: z.string().optional(),
+    extends: note(z.union([Preset, z.array(Preset)]), { description: "Built-in presets applied before this file's rules: ctxmedic:recommended, ctxmedic:strict." }).optional(),
     rules: note(z.strictObject(Object.fromEntries(metas.map(([id, meta]) => [id, entry(meta).optional()]))), {
       description: 'Rule levels and options: "off", "on", a severity, or [level, options].',
     }).optional(),
@@ -93,7 +117,8 @@ export function loadConfig(root: string): CtxmedicConfig {
   }
   const r = CtxmedicConfig.safeParse(raw);
   if (!r.success) throw new ConfigError(`${CONFIG_FILE}: ${z.prettifyError(r.error)}`);
-  for (const [id, entry] of Object.entries(r.data.rules)) {
+  const config = resolveConfig(r.data);
+  for (const [id, entry] of Object.entries(config.rules)) {
     const opts = optionsOf(entry);
     if (!Object.keys(opts).length) continue;
     const schema = allRuleMeta().find(([x]) => x === id)?.[1].options;
@@ -101,7 +126,7 @@ export function loadConfig(root: string): CtxmedicConfig {
     const o = schema.safeParse(opts);
     if (!o.success) throw new ConfigError(`${CONFIG_FILE}: rule ${id}: ${z.prettifyError(o.error)}`);
   }
-  return r.data;
+  return config;
 }
 
 /** Stable id of the settings that change the score, "" for no config (history compares only equal ones, ADR-017). */

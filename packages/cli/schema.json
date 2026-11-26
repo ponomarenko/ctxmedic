@@ -5,6 +5,28 @@
     "$schema": {
       "type": "string"
     },
+    "extends": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "ctxmedic:recommended",
+            "ctxmedic:strict"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "ctxmedic:recommended",
+              "ctxmedic:strict"
+            ]
+          }
+        }
+      ],
+      "description": "Built-in presets applied before this file's rules: ctxmedic:recommended, ctxmedic:strict."
+    },
     "rules": {
       "type": "object",
       "properties": {
