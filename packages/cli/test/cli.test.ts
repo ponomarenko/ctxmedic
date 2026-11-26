@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
 import { ClinicalReport } from "@ctxmedic/clinical";
+import { RuleInfo } from "@ctxmedic/core";
 
 const pkg = fileURLToPath(new URL("..", import.meta.url));
 const bin = path.join(pkg, "dist/index.js");
@@ -63,5 +64,29 @@ describe("cli", () => {
     const r = spawnSync(process.execPath, [bin, "restore", "latest"], { cwd: root, encoding: "utf8" });
     expect(r.status).toBe(0);
     expect(fs.existsSync(path.join(root, ".cursorignore"))).toBe(false);
+  });
+
+  it("rules lists every rule with the level and options from the config", () => {
+    const config = { rules: { INFO_UNSUPPORTED_SYNTAX: "off", WARN_CONTEXT_BLOAT: ["on", { tokens: 6000 }] } };
+    const root = project({ "ctxmedic.config.json": JSON.stringify(config) });
+    const rules = (...args: string[]) => spawnSync(process.execPath, [bin, "rules", ".", ...args], { cwd: root, encoding: "utf8", env: { ...process.env, NO_COLOR: "1" } });
+
+    const json = rules("--json");
+    expect(json.status).toBe(0);
+    const list = RuleInfo.array().parse(JSON.parse(json.stdout));
+    const byId = Object.fromEntries(list.map((r) => [r.id, r]));
+    expect(byId.INFO_UNSUPPORTED_SYNTAX!.level).toBe("off");
+    expect(byId.WARN_CONTEXT_BLOAT!.changed).toEqual({ tokens: 6000 });
+    expect(byId.FIN_CONTEXT_SNOWBALL!.source).toBe("session-logs");
+    expect(byId.FIN_CONTEXT_SNOWBALL!.options).toEqual({ steps: 35, heavySteps: 10 });
+
+    const text = rules().stdout;
+    expect(text).toMatch(/INFO_UNSUPPORTED_SYNTAX\s+off/);
+    expect(text).toMatch(/WARN_CONTEXT_BLOAT\s+on.*tokens=6000/);
+
+    fs.writeFileSync(path.join(root, "ctxmedic.config.json"), JSON.stringify({ rules: { NOPE: "off" } }));
+    const bad = rules();
+    expect(bad.status).toBe(2);
+    expect(bad.stderr).toContain("ctxmedic.config.json");
   });
 });
