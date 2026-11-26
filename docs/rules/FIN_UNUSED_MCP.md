@@ -26,7 +26,13 @@ Servers live in the project-level config of the projects that use them.
 
 ## Options
 
-None yet: the thresholds are constants in `packages/finops/src/detectors.ts` (see the roadmap).
+| Option | Type | Default | Meaning |
+|---|---|---|---|
+| `schemaTokens` | positive integer | `1500` | Tokens of tool definitions assumed per idle server when the logs did not record its real size (ADR-018). Measured sizes always win. |
+
+```json
+{ "rules": { "FIN_UNUSED_MCP": ["on", { "schemaTokens": 3000 }] } }
+```
 
 ## How to disable
 

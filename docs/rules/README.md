@@ -13,10 +13,10 @@ Rules with `FIN_` read your local session logs; the others read config files.
 | [`CRIT_SECRET_LEAK`](CRIT_SECRET_LEAK.md) | Do not store secrets in plain text in AI configs | `problem` |  |  |
 | [`INFO_UNSUPPORTED_SYNTAX`](INFO_UNSUPPORTED_SYNTAX.md) | Flag directives a harness does not understand | `suggestion` |  |  |
 | [`FIN_BLOAT_IGNORE`](FIN_BLOAT_IGNORE.md) | Keep build output and lockfiles out of the AI index with an ignore file | `suggestion` | ✔ |  |
-| [`FIN_UNUSED_MCP`](FIN_UNUSED_MCP.md) | Remove MCP servers that are never called | `suggestion` |  |  |
-| [`FIN_MODEL_OVERKILL`](FIN_MODEL_OVERKILL.md) | Route one-shot tasks to a cheaper model | `suggestion` |  |  |
-| [`FIN_CONTEXT_SNOWBALL`](FIN_CONTEXT_SNOWBALL.md) | Compact or clear long sessions | `suggestion` |  |  |
-| [`FIN_CACHE_MISS`](FIN_CACHE_MISS.md) | Keep the prompt cache warm | `suggestion` |  |  |
+| [`FIN_UNUSED_MCP`](FIN_UNUSED_MCP.md) | Remove MCP servers that are never called | `suggestion` |  | ✔ |
+| [`FIN_MODEL_OVERKILL`](FIN_MODEL_OVERKILL.md) | Route one-shot tasks to a cheaper model | `suggestion` |  | ✔ |
+| [`FIN_CONTEXT_SNOWBALL`](FIN_CONTEXT_SNOWBALL.md) | Compact or clear long sessions | `suggestion` |  | ✔ |
+| [`FIN_CACHE_MISS`](FIN_CACHE_MISS.md) | Keep the prompt cache warm | `suggestion` |  | ✔ |
 
 ## Configuring rules
 

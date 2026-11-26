@@ -1,4 +1,4 @@
-import { applyConfig, FinOpsReport, findFiles, type CtxmedicConfig, type ScannedFile } from "@ctxmedic/core";
+import { applyConfig, FinOpsReport, findFiles, levelOf, optionsOf, type CtxmedicConfig, type ScannedFile } from "@ctxmedic/core";
 import { cachedParse, loadCache, saveCache } from "./cache.js";
 import { detectors } from "./detectors.js";
 import { LOG_SOURCES, type SessionStats } from "./parsers.js";
@@ -61,8 +61,10 @@ export function buildReport(sessions: SessionStats[], { days = 30, root, files, 
       read += u.cacheRead;
     }
   }
-  const raw = detectors.flatMap((d) => d({ sessions, days, files, root }));
-  // shortcut: FIN_* detectors take no options yet (thresholds are constants), until they become core-style rules.
+  // Like core rules: "off" detectors do not run, the rest get their options from the config (validated by loadConfig).
+  const raw = detectors
+    .filter((d) => levelOf(config?.rules[d.id]) !== "off")
+    .flatMap((d) => d.check({ sessions, days, files, root }, d.meta.options!.parse(optionsOf(config?.rules[d.id])) as never));
   const findings = config ? applyConfig(raw, files, config) : raw;
   return FinOpsReport.parse({
     periodDays: days,

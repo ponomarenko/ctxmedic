@@ -26,7 +26,14 @@ Skills and subagents for routine tasks set `model:` in their frontmatter.
 
 ## Options
 
-None yet: the thresholds are constants in `packages/finops/src/detectors.ts` (see the roadmap).
+| Option | Type | Default | Meaning |
+|---|---|---|---|
+| `maxSteps` | positive integer | `2` | A session with at most this many steps counts as a one-shot task. |
+| `minSessions` | positive integer | `3` | How many one-shot sessions on one expensive model it takes to report it. |
+
+```json
+{ "rules": { "FIN_MODEL_OVERKILL": ["on", { "maxSteps": 3, "minSessions": 5 }] } }
+```
 
 ## How to disable
 

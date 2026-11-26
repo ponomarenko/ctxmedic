@@ -26,7 +26,15 @@ Static instructions at the top; dynamic data later or not at all; no model switc
 
 ## Options
 
-None yet: the thresholds are constants in `packages/finops/src/detectors.ts` (see the roadmap).
+| Option | Type | Default | Meaning |
+|---|---|---|---|
+| `minHitRatio` | number 0–1 | `0.4` | Cache hit ratio below which the rule fires. |
+| `targetHitRatio` | number 0–1 | `0.7` | The ratio the savings estimate assumes you can reach; at least `minHitRatio`. |
+| `minTokens` | positive integer | `1000000` | Input tokens a harness needs before its ratio is judged. |
+
+```json
+{ "rules": { "FIN_CACHE_MISS": ["on", { "minHitRatio": 0.5 }] } }
+```
 
 ## How to disable
 

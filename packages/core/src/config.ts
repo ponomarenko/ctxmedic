@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import picomatch from "picomatch";
 import { z } from "zod";
-import { rules } from "./rules/index.js";
+import { finopsMeta, rules } from "./rules/index.js";
 import { RuleId, Severity, type Finding, type ScannedFile } from "./schema.js";
 
 export const CONFIG_FILE = "ctxmedic.config.json";
@@ -43,7 +43,7 @@ export function loadConfig(root: string): CtxmedicConfig {
   for (const [id, entry] of Object.entries(r.data.rules)) {
     const opts = optionsOf(entry);
     if (!Object.keys(opts).length) continue;
-    const schema = rules.find((x) => x.id === id)?.meta.options;
+    const schema = (rules.find((x) => x.id === id)?.meta ?? finopsMeta[id as keyof typeof finopsMeta])?.options;
     if (!schema) throw new ConfigError(`${CONFIG_FILE}: rule ${id} takes no options`);
     const o = schema.safeParse(opts);
     if (!o.success) throw new ConfigError(`${CONFIG_FILE}: rule ${id}: ${z.prettifyError(o.error)}`);

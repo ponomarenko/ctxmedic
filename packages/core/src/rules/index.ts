@@ -9,6 +9,7 @@ import { syntax } from "./syntax.js";
 import type { Rule, RuleContext } from "./types.js";
 
 export * from "./types.js";
+export * from "./finopsMeta.js";
 export { similarity } from "./duplicates.js";
 
 export const rules: Rule[] = [brokenLink, contextBloat, duplicates, skills, secretLeak, syntax, bloatIgnore];
