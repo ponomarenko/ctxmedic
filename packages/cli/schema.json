@@ -5,6 +5,13 @@
     "$schema": {
       "type": "string"
     },
+    "plugins": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "npm packages in node_modules that add rules. They run only with --plugins (their code can do anything ctxmedic can)."
+    },
     "extends": {
       "anyOf": [
         {

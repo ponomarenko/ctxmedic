@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Finding, FinOpsReport, PatientVitals, RuleId } from "@ctxmedic/core";
+import { Finding, FinOpsReport, PatientVitals, PluginInfo, RuleId } from "@ctxmedic/core";
 
 // Supported interface languages. To add one: add its code here and a `Messages` catalog in i18n.ts (ADR-015).
 export const Lang = z.enum(["en"]);
@@ -76,5 +76,7 @@ export const ClinicalReport = z.object({
   diagnoses: z.array(ClinicalDiagnosis),
   finops: FinOpsReport.nullable(),
   potentialMonthlySavingsUsd: z.number(),
+  /** Plugins listed in the config and whether this run loaded them (ADR-027). */
+  plugins: z.array(PluginInfo).default([]),
 });
 export type ClinicalReport = z.infer<typeof ClinicalReport>;

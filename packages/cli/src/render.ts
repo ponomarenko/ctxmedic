@@ -57,6 +57,14 @@ export function finopsSummary(f: FinOpsReport, lang: Lang): string {
     .join("\n");
 }
 
+/** Which plugins ran, or which were skipped because the run did not pass --plugins (ADR-027). */
+function plugins(r: ClinicalReport): string[] {
+  const tx = t(r.lang);
+  const loaded = r.plugins.filter((p) => p.loaded).map((p) => `${p.name}${p.version ? `@${p.version}` : ""}`);
+  const skipped = r.plugins.filter((p) => !p.loaded).map((p) => p.name);
+  return [loaded.length ? pc.dim(`   ${tx.pluginsLoaded(loaded.join(", "))}`) : "", skipped.length ? pc.yellow(`   ${tx.pluginsSkipped(skipped.join(", "))}`) : ""].filter(Boolean);
+}
+
 export function header(r: ClinicalReport): string {
   const tx = t(r.lang);
   const delta = r.previous ? r.healthScore - r.previous.healthScore : null;
@@ -68,6 +76,7 @@ export function header(r: ClinicalReport): string {
     "",
     `   ${tx.health}: ${bar(r.healthScore)} ${pc.bold(String(r.healthScore))}/100${trend}`,
     `   ${pc.italic(r.opinion)}`,
+    ...plugins(r),
     `   ${tx.triage.resuscitation} ${r.counts.resuscitation}   ${tx.triage.therapy} ${r.counts.therapy}   ${tx.triage.preventive} ${r.counts.preventive}` +
       (r.potentialMonthlySavingsUsd ? `   ·   ${tx.savings}: ${pc.green(pc.bold(usd(r.potentialMonthlySavingsUsd) + tx.perMonth))}` : ""),
     "",
