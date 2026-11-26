@@ -6,13 +6,29 @@ import { duplicates } from "./duplicates.js";
 import { secretLeak } from "./secretLeak.js";
 import { skills } from "./skills.js";
 import { syntax } from "./syntax.js";
-import type { Rule, RuleContext } from "./types.js";
+import { finopsMeta } from "./finopsMeta.js";
+import { docsUrl, type Rule, type RuleContext, type RuleMeta } from "./types.js";
 
 export * from "./types.js";
 export * from "./finopsMeta.js";
 export { similarity } from "./duplicates.js";
 
 export const rules: Rule[] = [brokenLink, contextBloat, duplicates, skills, secretLeak, syntax, bloatIgnore];
+
+/** Reported by `applyConfig`, not by a check of its own, so it has meta but no `Rule` object. */
+export const unusedDisableMeta: RuleMeta = {
+  description: "Remove ctxmedic-disable comments that silence nothing",
+  type: "suggestion",
+  docs: docsUrl("INFO_UNUSED_DISABLE"),
+  fixable: false,
+};
+
+/** Every configurable rule id with its meta and what it reads: config files or session logs. */
+export const allRuleMeta = (): [Finding["ruleId"], RuleMeta<any>, "config" | "session-logs"][] => [
+  ...rules.map((r) => [r.id, r.meta, "config"] as [Finding["ruleId"], RuleMeta<any>, "config"]),
+  ["INFO_UNUSED_DISABLE", unusedDisableMeta, "config"],
+  ...Object.entries(finopsMeta).map(([id, meta]) => [id, meta, "session-logs"] as [Finding["ruleId"], RuleMeta<any>, "session-logs"]),
+];
 
 /** Runs every rule except the ones a config turns off. `options` holds raw per-rule options; each rule parses its own. */
 export async function runRules(

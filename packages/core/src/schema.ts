@@ -10,6 +10,7 @@ export const RuleId = z.enum([
   "ERR_INVALID_SKILL",
   "CRIT_SECRET_LEAK",
   "INFO_UNSUPPORTED_SYNTAX",
+  "INFO_UNUSED_DISABLE",
   "FIN_BLOAT_IGNORE",
   "FIN_UNUSED_MCP",
   "FIN_MODEL_OVERKILL",
@@ -57,6 +58,8 @@ export const Finding = z.object({
   severity: Severity,
   message: z.string(),
   files: z.array(z.string()).default([]),
+  /** 1-based line in `files[0]`, when the finding points at one line (line-level disable comments use it). */
+  line: z.number().int().positive().optional(),
   /** Raw lab values used by the clinical layer (token counts, ratios, $). */
   data: z.record(z.string(), z.unknown()).default({}),
   monthlySavingsUsd: z.number().nonnegative().optional(),

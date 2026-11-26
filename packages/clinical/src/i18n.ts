@@ -105,6 +105,12 @@ const en: Messages = {
         `${d(f, "harness")} reads ${(d(f, "directives") ?? []).join(", ")} as plain text: noise at best, wrong instructions at worst.`,
       action: () => "Move tool-specific directives into that tool's own file, or keep shared files directive-free.",
     },
+    INFO_UNUSED_DISABLE: {
+      name: "Phantom Prescription",
+      prognosis: (f) =>
+        `${f.files[0]}:${f.line} silences ${(d(f, "ids") ?? []).join(", ") || "every rule"}, but nothing there needed it. A stale disable hides the next real problem.`,
+      action: (f) => `Delete the ctxmedic-disable comment on line ${f.line} of ${f.files[0]}.`,
+    },
     FIN_BLOAT_IGNORE: {
       name: "Indexing Bloat",
       prognosis: (f) => `${d(f, "harness")} indexes build output and lockfiles. Search results fill with junk and retrieval burns tokens.`,

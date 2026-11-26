@@ -16,7 +16,9 @@ const ORDER: Triage[] = ["resuscitation", "therapy", "preventive"];
 const human = (k: string) => k.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
 function vitals(f: Finding): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = [];
-  if (f.files.length) out.push({ label: "Files", value: f.files.slice(0, 3).join(", ") + (f.files.length > 3 ? ` +${f.files.length - 3}` : "") });
+  // The first file carries the line when the finding points at one (`file:line`, like compilers print it).
+  const shown = f.files.slice(0, 3).map((p, i) => (i === 0 && f.line ? `${p}:${f.line}` : p));
+  if (f.files.length) out.push({ label: "Files", value: shown.join(", ") + (f.files.length > 3 ? ` +${f.files.length - 3}` : "") });
   for (const [k, v] of Object.entries(f.data)) {
     if (typeof v === "number")
       out.push({

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { ConfigError, configHash, configJsonSchema, CtxmedicConfig, disabledIn, examine, finopsMeta, loadConfig, rules } from "@ctxmedic/core";
+import { allRuleMeta, applyConfig, ConfigError, configHash, configJsonSchema, CtxmedicConfig, directivesIn, disabledIn, examine, finopsMeta, loadConfig, rules } from "@ctxmedic/core";
 import { harnesses } from "@ctxmedic/harnesses";
 
 function project(files: Record<string, string>): string {
@@ -73,6 +73,36 @@ describe("inline disable comments", () => {
     expect(disabledIn("plain text").size).toBe(0);
   });
 
+  // A Markdown file and findings on it; applyConfig is pure, so no scan is needed.
+  const md = (text: string) => [{ path: "/p/AGENTS.md", rel: "AGENTS.md", scope: "project" as const, role: "instructions" as const, harnesses: ["codex"], isSymlink: false, broken: false, loop: false, text, tokens: 1 }];
+  const on = (line: number) => ({ ruleId: "INFO_UNSUPPORTED_SYNTAX" as const, severity: "info" as const, message: "m", files: ["AGENTS.md"], line, data: {} });
+  const none = CtxmedicConfig.parse({});
+
+  it("tells file-level and line-level comments apart", () => {
+    const ds = directivesIn("a\n<!-- ctxmedic-disable-next-line INFO_UNSUPPORTED_SYNTAX -->\nb <!-- ctxmedic-disable-line -->\n<!--ctxmedic-disable-->");
+    expect(ds.map((d) => [d.kind, d.line, d.target])).toEqual([["next-line", 2, 3], ["line", 3, 3], ["file", 4, undefined]]);
+    expect(disabledIn("<!-- ctxmedic-disable-next-line ERR_INVALID_SKILL -->").size).toBe(0);
+  });
+
+  it("silences only the finding on the line a line comment covers", () => {
+    const files = md("x\n<!-- ctxmedic-disable-next-line INFO_UNSUPPORTED_SYNTAX -->\n@a.md\n@b.md");
+    expect(applyConfig([on(3), on(4)], files, none).map((f) => f.line)).toEqual([4]);
+    // A line comment never silences a finding without a line.
+    const { line: _, ...whole } = on(3);
+    expect(applyConfig([whole], files, none)).toHaveLength(1);
+  });
+
+  it("reports comments that silence nothing, with their line", () => {
+    const files = md("x\n<!-- ctxmedic-disable-next-line INFO_UNSUPPORTED_SYNTAX -->\n@a.md\n<!-- ctxmedic-disable WARN_CONTEXT_BLOAT -->");
+    const out = applyConfig([on(3)], files, none, { reportUnused: true });
+    expect(out.map((f) => [f.ruleId, f.line])).toEqual([["INFO_UNUSED_DISABLE", 4]]);
+    // Not reported without the flag (finops), and the rule can be turned off.
+    expect(applyConfig([on(3)], files, none)).toHaveLength(0);
+    expect(applyConfig([on(3)], files, CtxmedicConfig.parse({ rules: { INFO_UNUSED_DISABLE: "off" } }), { reportUnused: true })).toHaveLength(0);
+    // A comment for a rule that is "off" in the config silences nothing.
+    expect(applyConfig([on(3)], files, CtxmedicConfig.parse({ rules: { INFO_UNSUPPORTED_SYNTAX: "off" } }), { reportUnused: true }).map((f) => f.line)).toEqual([2, 4]);
+  });
+
   it("silences a rule in the file that carries the comment", async () => {
     const skill = (c: string) => ({ ".claude/skills/bad/SKILL.md": `no frontmatter here\n${c}` });
     expect(await ids(project(skill("<!-- ctxmedic-disable ERR_INVALID_SKILL -->")))).not.toContain("ERR_INVALID_SKILL");
@@ -83,7 +113,7 @@ describe("inline disable comments", () => {
 
 describe("rule meta", () => {
   it("every rule and FIN_* detector has a description and a docs page that lists its options", () => {
-    const all = [...rules.map((r) => [r.id, r.meta] as const), ...Object.entries(finopsMeta)];
+    const all = allRuleMeta().map(([id, meta]) => [id, meta] as const);
     for (const [id, meta] of all) {
       expect(meta.description.length).toBeGreaterThan(10);
       const doc = path.join(__dirname, "../../../docs/rules", `${id}.md`);
@@ -100,7 +130,7 @@ describe("JSON Schema for editors", () => {
   const ruleProps = schema.properties.rules.properties;
 
   it("lists every rule with its options and flags unknown ids", () => {
-    expect(Object.keys(ruleProps).sort()).toEqual([...rules.map((r) => r.id), ...Object.keys(finopsMeta)].sort());
+    expect(Object.keys(ruleProps).sort()).toEqual(allRuleMeta().map(([id]) => id).sort());
     expect(schema.properties.rules.additionalProperties).toBe(false);
     const options = (id: string) => ruleProps[id].anyOf.find((v: any) => Array.isArray(v.items) && v.items.length === 2).items[1].properties;
     expect(options("WARN_CONTEXT_BLOAT").tokens.default).toBe(3500);

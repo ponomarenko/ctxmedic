@@ -12,6 +12,7 @@ Rules with `FIN_` read your local session logs; the others read config files.
 | [`ERR_INVALID_SKILL`](ERR_INVALID_SKILL.md) | Skills need valid frontmatter, a unique name and a description with a trigger | `problem` |  |  |
 | [`CRIT_SECRET_LEAK`](CRIT_SECRET_LEAK.md) | Do not store secrets in plain text in AI configs | `problem` |  |  |
 | [`INFO_UNSUPPORTED_SYNTAX`](INFO_UNSUPPORTED_SYNTAX.md) | Flag directives a harness does not understand | `suggestion` |  |  |
+| [`INFO_UNUSED_DISABLE`](INFO_UNUSED_DISABLE.md) | Remove ctxmedic-disable comments that silence nothing | `suggestion` |  |  |
 | [`FIN_BLOAT_IGNORE`](FIN_BLOAT_IGNORE.md) | Keep build output and lockfiles out of the AI index with an ignore file | `suggestion` | ✔ |  |
 | [`FIN_UNUSED_MCP`](FIN_UNUSED_MCP.md) | Remove MCP servers that are never called | `suggestion` |  | ✔ |
 | [`FIN_MODEL_OVERKILL`](FIN_MODEL_OVERKILL.md) | Route one-shot tasks to a cheaper model | `suggestion` |  | ✔ |
@@ -73,6 +74,21 @@ Inside a Markdown file (instructions, rules, skills):
 The comment silences matching findings that report this file, wherever the
 comment sits in the file. Everything after `--` is a free-text reason.
 JSON files cannot carry comments; use `ignores` for them.
+
+For one line, put the comment on that line or on the line before it:
+
+```markdown
+See @docs/extra.md <!-- ctxmedic-disable-line INFO_UNSUPPORTED_SYNTAX -->
+<!-- ctxmedic-disable-next-line INFO_UNSUPPORTED_SYNTAX -->
+See @docs/extra.md
+```
+
+Line comments only silence findings that point at a line (the card shows
+`file:line`); findings about a whole file need the file-level comment.
+
+A comment that silences nothing is reported as
+[`INFO_UNUSED_DISABLE`](INFO_UNUSED_DISABLE.md), with its line, so stale
+comments do not pile up.
 
 ### Health Score and history
 

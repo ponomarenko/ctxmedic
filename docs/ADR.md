@@ -189,7 +189,14 @@ ecosystem (see the roadmap, "v0.4 Rule ecosystem").
 every rule's options in one place, and the check lives in `finops`, which
 depends on core. Detectors turned off do not run.
 
-Known limits: disables are per file, not per line; adding or removing an inline disable comment changes the score without
+Disable comments also work per line (`ctxmedic-disable-line`,
+`ctxmedic-disable-next-line`) for findings that carry a `line` (1-based, in
+their first file), and comments that silence nothing are reported as
+`INFO_UNUSED_DISABLE`. That id has meta but no `Rule` object: `applyConfig`
+reports it, and only `examine` asks it to, because `FIN_*` log findings never
+point at Markdown files.
+
+Known limits: adding or removing an inline disable comment changes the score without
 starting a new trend, like any other edit to the files.
 
 ## ADR-021 No Anthropic SDK

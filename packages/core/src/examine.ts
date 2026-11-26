@@ -23,7 +23,8 @@ export async function examine(root: string, profiles: HarnessProfile[], opts: Sc
   const entries = Object.entries(config.rules);
   const off = new Set(entries.filter(([, e]) => levelOf(e) === "off").map(([id]) => id));
   const options = Object.fromEntries(entries.map(([id, e]) => [id, optionsOf(e)]));
-  const findings = applyConfig(await runRules({ root, files, profiles, startup }, undefined, options, off), files, config);
+  // Unused disable comments are judged here: FIN_* log findings never point at Markdown files.
+  const findings = applyConfig(await runRules({ root, files, profiles, startup }, undefined, options, off), files, config, { reportUnused: true });
   const vitals = PatientVitals.parse({
     root,
     scannedAt: new Date().toISOString(),
