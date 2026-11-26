@@ -25,8 +25,8 @@ More precise numbers, undo for fixes, tests for every entry point.
 
 ## v0.3 Web UI
 
-- [ ] Graph tab: automatic layout and legend (#10)
-- [ ] Live UI updates when config files change (#11)
+- [x] Graph tab: automatic layout and legend (#10)
+- [x] Live UI updates when config files change (#11)
 
 ## v0.4 Rule ecosystem
 
@@ -34,13 +34,13 @@ ESLint-style rules, step by step (ADR-020). The first step is done: config
 file, levels, options, `ignores`, inline disables, rule `meta` and
 [rule docs](docs/rules/README.md).
 
-- [ ] `FIN_*` detectors as `Rule` objects with `meta` and options (thresholds from config)
-- [ ] JSON Schema for `ctxmedic.config.json` (`$schema`, editor autocomplete), generated from Zod
-- [ ] `ctxmedic rules`: list rules with meta and the effective config
-- [ ] Line-level disables and a report of unused disable comments
-- [ ] Shareable configs: `extends` with built-in presets (`recommended`, `strict`)
-- [ ] Rule ids with namespaces (`plugin/RULE`): open `RuleId`, catalog cards and score weights for external rules
-- [ ] Plugins: load rules from npm packages, opt-in, with a privacy ADR (plugin code can reach the network)
+- [ ] `FIN_*` detectors as `Rule` objects with `meta` and options (thresholds from config) (#99)
+- [ ] JSON Schema for `ctxmedic.config.json` (`$schema`, editor autocomplete), generated from Zod (#100)
+- [ ] `ctxmedic rules`: list rules with meta and the effective config (#101)
+- [ ] Line-level disables and a report of unused disable comments (#102)
+- [ ] Shareable configs: `extends` with built-in presets (`recommended`, `strict`) (#103)
+- [ ] Rule ids with namespaces (`plugin/RULE`): open `RuleId`, catalog cards and score weights for external rules (#104)
+- [ ] Plugins: load rules from npm packages, opt-in, with a privacy ADR (plugin code can reach the network) (#105)
 
 ## v0.5 Content diagnostics
 
