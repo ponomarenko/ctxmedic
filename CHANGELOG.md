@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/ponomarenko/ctxmedic/compare/v0.5.1...v0.6.0) (2026-11-26)
+
+
+### Features
+
+* **ui:** automatic graph layout, scope groups and a legend ([#95](https://github.com/ponomarenko/ctxmedic/issues/95)) ([9c1fe92](https://github.com/ponomarenko/ctxmedic/commit/9c1fe9247bf297923e5449d673b0876b9598a762))
+
 ## [0.5.1](https://github.com/ponomarenko/ctxmedic/compare/v0.5.0...v0.5.1) (2026-11-26)
 
 
