@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/ponomarenko/ctxmedic/compare/v0.8.0...v0.9.0) (2026-11-26)
+
+
+### Features
+
+* **core:** JSON Schema for ctxmedic.config.json ([#109](https://github.com/ponomarenko/ctxmedic/issues/109)) ([32d62af](https://github.com/ponomarenko/ctxmedic/commit/32d62afc3d7562a3f62ae213bc126ca456583b59))
+
 ## [0.8.0](https://github.com/ponomarenko/ctxmedic/compare/v0.7.0...v0.8.0) (2026-11-26)
 
 
