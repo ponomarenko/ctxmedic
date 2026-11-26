@@ -223,3 +223,15 @@ including `--no-finops`, and can fix itself through `applyFix` (it writes the
 ignore file). It keeps its `FIN_` id because the cost of indexing those files
 is what it reports.
 
+
+## ADR-025 Graph layout with dagre
+The Graph tab lays nodes out with `@dagrejs/dagre` (pure JS, bundled into the
+UI only) instead of three fixed columns. The graph is layered by nature
+(harness → file → symlink target), which is what dagre does well; `elkjs` lays
+out clusters better but is several times larger and usually runs in a web
+worker. Files sit in one compound cluster per scope (project, global), drawn as
+React Flow parent nodes. Duplicate edges are drawn but left out of the layout,
+because they link files of the same rank and would push one of them a rank
+further. `/api/graph` now returns the `ConfigGraph` Zod contract
+(`packages/core/src/schema.ts`) like every other route (ADR-002). The layout is
+a pure function (`layout` in `packages/ui/src/Graph.tsx`) with its own test.

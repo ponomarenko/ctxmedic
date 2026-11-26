@@ -5,7 +5,7 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { checkup, loadHistory, resolveLang, scanSettings, treat, type Lang } from "@ctxmedic/clinical";
-import { configHash, examine, FixRefusedError, loadConfig, similarity } from "@ctxmedic/core";
+import { ConfigGraph, configHash, examine, FixRefusedError, loadConfig, similarity } from "@ctxmedic/core";
 import { harnesses } from "@ctxmedic/harnesses";
 
 export interface ServerOptions {
@@ -39,15 +39,15 @@ export function createApp(opts: ServerOptions & { token: string }) {
   /** Nodes and edges for the dependency graph: files per harness, symlinks, duplicates. */
   app.get("/api/graph", async (c) => {
     const ex = await examine(root, harnesses);
-    const nodes: { id: string; kind: string; label: string; tokens?: number; broken?: boolean; scope?: string }[] = [
-      ...ex.vitals.harnesses.map((h) => ({ id: `h:${h}`, kind: "harness", label: harnesses.find((x) => x.id === h)?.name ?? h })),
+    const nodes: ConfigGraph["nodes"] = [
+      ...ex.vitals.harnesses.map((h) => ({ id: `h:${h}`, kind: "harness" as const, label: harnesses.find((x) => x.id === h)?.name ?? h })),
       ...ex.files.map((f) => ({ id: f.path, kind: f.role, label: f.rel, tokens: f.tokens, broken: f.broken || f.loop, scope: f.scope })),
     ];
-    const edges: { source: string; target: string; kind: string }[] = [];
+    const edges: ConfigGraph["edges"] = [];
     for (const f of ex.files) {
-      for (const h of f.harnesses) edges.push({ source: `h:${h}`, target: f.path, kind: "loads" });
+      for (const h of f.harnesses) edges.push({ source: `h:${h}`, target: f.path, kind: "loads" as const });
       if (f.isSymlink && f.realpath) {
-        if (!nodes.some((n) => n.id === f.realpath)) nodes.push({ id: f.realpath, kind: "target", label: path.relative(root, f.realpath), tokens: f.tokens, broken: false, scope: f.scope });
+        if (!nodes.some((n) => n.id === f.realpath)) nodes.push({ id: f.realpath, kind: "target" as const, label: path.relative(root, f.realpath), tokens: f.tokens, broken: false, scope: f.scope });
         edges.push({ source: f.path, target: f.realpath, kind: "symlink" });
       }
     }
@@ -55,7 +55,7 @@ export function createApp(opts: ServerOptions & { token: string }) {
     for (let i = 0; i < docs.length; i++)
       for (let j = i + 1; j < docs.length; j++)
         if (similarity(docs[i]!.text!, docs[j]!.text!) > 0.75) edges.push({ source: docs[i]!.path, target: docs[j]!.path, kind: "duplicate" });
-    return c.json({ nodes, edges });
+    return c.json(ConfigGraph.parse({ nodes, edges }));
   });
 
   app.post("/api/treat/:rx", async (c) => {

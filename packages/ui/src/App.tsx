@@ -1,19 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Background, Controls, ReactFlow, type Edge, type Node } from "@xyflow/react";
 import { Activity, CircleDollarSign, GitBranch, HeartPulse, Languages, Loader2, RefreshCw, Stethoscope, Wrench } from "lucide-react";
 import type { ClinicalDiagnosis, ClinicalReport, Visit } from "@ctxmedic/clinical";
+import type { ConfigGraph } from "@ctxmedic/core";
+import { Graph } from "./Graph";
 
 type Tab = "dashboard" | "diagnoses" | "finops" | "graph";
-interface GraphData {
-  nodes: { id: string; kind: string; label: string; tokens?: number; broken?: boolean }[];
-  edges: { source: string; target: string; kind: string }[];
-}
 
 const token = new URLSearchParams(location.hash.slice(1)).get("token") ?? "";
 const usd = (n: number) => `$${n.toFixed(2)}`;
 // UI strings per language. To add one, add a catalog here (keys are checked against `en`) and in packages/clinical/src/i18n.ts.
 const L = {
-  en: { dashboard: "Dashboard", diagnoses: "Diagnoses", finops: "FinOps", graph: "Graph", health: "Health Score", savings: "Potential savings", spend: "Spend", runRate: "Run rate", cache: "Cache hit", treat: "Treat", dry: "Preview", trend: "Recovery dynamics", none: "No complaints. The patient is healthy.", noLogs: "No session logs found.", prognosis: "Prognosis", rx: "Prescription", manual: "Manual treatment", model: "Model", cost: "Cost", requests: "Requests", mo: "/mo", estimatedPrice: "≈ model not in the price table: estimated at Sonnet-class rates" },
+  en: { dashboard: "Dashboard", diagnoses: "Diagnoses", finops: "FinOps", graph: "Graph", health: "Health Score", savings: "Potential savings", spend: "Spend", runRate: "Run rate", cache: "Cache hit", treat: "Treat", dry: "Preview", trend: "Recovery dynamics", none: "No complaints. The patient is healthy.", noLogs: "No session logs found.", prognosis: "Prognosis", rx: "Prescription", manual: "Manual treatment", model: "Model", cost: "Cost", requests: "Requests", mo: "/mo", estimatedPrice: "≈ model not in the price table: estimated at Sonnet-class rates", loads: "loads", symlink: "symlink", duplicate: "duplicate", broken: "broken link", project: "Project", global: "Global (home folder)" },
 } satisfies Record<string, Record<string, string>>;
 type Lang = keyof typeof L;
 const LANGS = Object.keys(L) as Lang[];
@@ -111,47 +108,12 @@ function Card({ d, lang, onTreat }: { d: ClinicalDiagnosis; lang: Lang; onTreat:
   );
 }
 
-function Graph({ data }: { data: GraphData }) {
-  const { nodes, edges } = useMemo(() => {
-    const col = (k: string) => (k === "harness" ? 0 : k === "target" ? 2 : 1);
-    const rows = [0, 0, 0];
-    const nodes: Node[] = data.nodes.map((n) => {
-      const c = col(n.kind);
-      const y = rows[c]!++ * 64;
-      const color = n.broken ? "#ef4444" : n.kind === "harness" ? "#0284c7" : n.kind === "target" ? "#7c3aed" : "#64748b";
-      return {
-        id: n.id,
-        position: { x: c * 340, y },
-        data: { label: `${n.label}${n.tokens ? ` · ${n.tokens.toLocaleString("en")} tok` : ""}` },
-        style: { border: `1.5px solid ${color}`, borderRadius: 8, fontSize: 11, width: 280, background: "var(--node-bg, white)" },
-      };
-    });
-    const edges: Edge[] = data.edges.map((e, i) => ({
-      id: `e${i}`,
-      source: e.source,
-      target: e.target,
-      animated: e.kind === "symlink",
-      label: e.kind === "loads" ? undefined : e.kind,
-      style: { stroke: e.kind === "duplicate" ? "#f59e0b" : e.kind === "symlink" ? "#7c3aed" : "#94a3b8", strokeDasharray: e.kind === "duplicate" ? "6 4" : undefined },
-    }));
-    return { nodes, edges };
-  }, [data]);
-  return (
-    <div className="h-[70vh] overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-900 dark:border-slate-800">
-      <ReactFlow nodes={nodes} edges={edges} fitView minZoom={0.1}>
-        <Background />
-        <Controls />
-      </ReactFlow>
-    </div>
-  );
-}
-
 export function App() {
   const [lang, setLang] = useState<Lang>(() => LANGS.find((l) => navigator.language.startsWith(l)) ?? "en");
   const [tab, setTab] = useState<Tab>("dashboard");
   const [report, setReport] = useState<ClinicalReport | null>(null);
   const [history, setHistory] = useState<Visit[]>([]);
-  const [graph, setGraph] = useState<GraphData | null>(null);
+  const [graph, setGraph] = useState<ConfigGraph | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const t = L[lang];
@@ -170,7 +132,7 @@ export function App() {
 
   useEffect(() => void load(true), []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => void (report && load()), [lang]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => void (tab === "graph" && !graph && api<GraphData>("/api/graph").then(setGraph).catch((e) => setToast(e.message))), [tab, graph]);
+  useEffect(() => void (tab === "graph" && !graph && api<ConfigGraph>("/api/graph").then(setGraph).catch((e) => setToast(e.message))), [tab, graph]);
 
   const onTreat = async (rx: string, dry: boolean) => {
     if (!dry && !confirm(`${t.treat} ${rx}? Originals are backed up to .ctxmedic/backups.`)) return;
@@ -283,7 +245,7 @@ export function App() {
             )
           )}
 
-          {tab === "graph" && (graph ? <Graph data={graph} /> : <div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div>)}
+          {tab === "graph" && (graph ? <Graph data={graph} t={t} /> : <div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div>)}
         </main>
       )}
     </div>
