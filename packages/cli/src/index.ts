@@ -20,7 +20,7 @@ import {
   type Anamnesis,
   type Lang,
 } from "@ctxmedic/clinical";
-import { applyFix, ConfigError, examine, FixRefusedError, listBackups, restoreBackup, type FixPlan } from "@ctxmedic/core";
+import { applyFix, CONFIG_FILE, ConfigError, describeRules, examine, FixRefusedError, listBackups, loadConfig, restoreBackup, type FixPlan } from "@ctxmedic/core";
 import { analyze } from "@ctxmedic/finops";
 import { harnesses } from "@ctxmedic/harnesses";
 import { startServer } from "@ctxmedic/server";
@@ -113,6 +113,21 @@ program
     const r = await restoreBackup(id, { root, dryRun: o.dryRun, force: o.force }).catch(fail);
     for (const line of r.restored) console.log(pc.dim(`  ${line}`));
     console.log(`${r.dryRun ? pc.yellow("dry-run") : pc.green("✔")} ${m.restored(r.id)}: ${r.title}`);
+  });
+
+program
+  .command("rules [path]")
+  .description("list rules with their effective level and options from ctxmedic.config.json")
+  .option("--lang <lang>", "interface language (only en for now)")
+  .option("--json", "print the rules as JSON")
+  .action((dir: string | undefined, o: { lang?: string; json?: boolean }) => {
+    let list;
+    try {
+      list = describeRules(loadConfig(path.resolve(dir ?? ".")));
+    } catch (e) {
+      fail(e);
+    }
+    console.log(o.json ? JSON.stringify(list, null, 2) : render.rules(list, resolveLang(o.lang) as Lang, CONFIG_FILE));
   });
 
 common(program.command("savings [path]").description("FinOps: token spend, cache hit ratio and savings prescriptions"))

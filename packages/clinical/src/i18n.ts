@@ -29,6 +29,8 @@ export interface Messages {
   };
   cli: {
     noBackups: string;
+    rulesColumns: { rule: string; level: string; type: string; fix: string; changed: string };
+    rulesHint: (configFile: string) => string;
     restoreHint: string;
     restored: (id: string) => string;
     noAutoFix: string;
@@ -159,6 +161,8 @@ const en: Messages = {
   },
   cli: {
     noBackups: "No backups in .ctxmedic/backups: nothing to restore.",
+    rulesColumns: { rule: "Rule", level: "Level", type: "Type", fix: "Fix", changed: "Changed options" },
+    rulesHint: (configFile) => `Levels and options come from ${configFile}. Docs: docs/rules/<RULE>.md`,
     restoreHint: "Undo a fix: ctxmedic restore <backup> (or latest)",
     restored: (id) => `Restored backup ${id}`,
     noAutoFix: "No auto-fix: follow the prescription by hand.",

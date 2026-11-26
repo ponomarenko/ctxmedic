@@ -53,6 +53,7 @@ npx ctxmedic checkup
 | `ctxmedic savings` | FinOps only: spend, run rate, cache hit ratio, savings. |
 | `ctxmedic consult [--ai]` | Interactive appointment: your priorities, budget and main tool shape the treatment plan. `--ai` asks local Ollama or your own Anthropic/OpenAI key for a second opinion. |
 | `ctxmedic history` | Health Score over time. |
+| `ctxmedic rules [path]` | Every rule with its effective level and the options `ctxmedic.config.json` changed. `--json`. |
 | `ctxmedic ui` | Local Web UI on `127.0.0.1`: dashboard, diagnoses, FinOps, config graph. |
 
 Common options: `--days 30`, `--no-finops`, `--no-global`.

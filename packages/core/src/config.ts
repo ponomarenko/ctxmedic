@@ -28,6 +28,38 @@ export class ConfigError extends Error {}
 export const levelOf = (e: RuleEntry | undefined): RuleLevel => (e === undefined ? "on" : typeof e === "string" ? e : e[0]);
 export const optionsOf = (e: RuleEntry | undefined): Record<string, unknown> => (Array.isArray(e) && e[1]) || {};
 
+/** One rule as `ctxmedic rules` shows it: its meta plus what the config made of it. */
+export const RuleInfo = z.object({
+  id: RuleId,
+  /** "config": reads config files; "session-logs": a FIN_* detector that reads session logs. */
+  source: z.enum(["config", "session-logs"]),
+  level: RuleLevel,
+  type: z.enum(["problem", "suggestion"]),
+  fixable: z.boolean(),
+  description: z.string(),
+  docs: z.string(),
+  /** Effective options, defaults included. */
+  options: z.record(z.string(), z.unknown()),
+  /** Options the config set to a value other than the default. */
+  changed: z.record(z.string(), z.unknown()),
+});
+export type RuleInfo = z.infer<typeof RuleInfo>;
+
+/** Every rule and FIN_* detector with its effective level and options under `config`. */
+export function describeRules(config: CtxmedicConfig): RuleInfo[] {
+  const all = [
+    ...rules.map((r) => [r.id, r.meta, "config"] as const),
+    ...Object.entries(finopsMeta).map(([id, meta]) => [id as RuleId, meta, "session-logs"] as const),
+  ];
+  return all.map(([id, meta, source]) => {
+    const entry = config.rules[id];
+    const options = (meta.options?.parse(optionsOf(entry)) ?? {}) as Record<string, unknown>;
+    const defaults = (meta.options?.parse({}) ?? {}) as Record<string, unknown>;
+    const changed = Object.fromEntries(Object.entries(options).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify(defaults[k])));
+    return RuleInfo.parse({ id, source, level: levelOf(entry), type: meta.type, fixable: meta.fixable, description: meta.description, docs: meta.docs, options, changed });
+  });
+}
+
 /**
  * JSON Schema of `ctxmedic.config.json` for editors (`$schema`): like `CtxmedicConfig`, but each rule id gets its
  * own options and description, and unknown ids are flagged. `packages/cli/schema.json` is this output; a test keeps it fresh.

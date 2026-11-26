@@ -1,6 +1,6 @@
 import pc from "picocolors";
-import { DEFAULT_SCAN, t, type ClinicalDiagnosis, type ClinicalReport, type Lang, type Visit } from "@ctxmedic/clinical";
-import type { FinOpsReport } from "@ctxmedic/core";
+import { DEFAULT_SCAN, messages, t, type ClinicalDiagnosis, type ClinicalReport, type Lang, type Visit } from "@ctxmedic/clinical";
+import type { FinOpsReport, RuleInfo } from "@ctxmedic/core";
 
 const COLOR = { resuscitation: pc.red, therapy: pc.yellow, preventive: pc.green } as const;
 const usd = (n: number) => `$${n.toFixed(2)}`;
@@ -91,3 +91,18 @@ export function history(visits: Visit[]): string {
     .map((v) => `${v.at.slice(0, 16).replace("T", " ")}  ${bar(v.healthScore)} ${String(v.healthScore).padStart(3)}  🔴${v.counts.resuscitation} 🟡${v.counts.therapy} 🟢${v.counts.preventive}  ${pc.dim(v.root)}${scanFlags(v)}`)
     .join("\n");
 }
+
+/** `ctxmedic rules`: one line per rule; rules turned off are dimmed. */
+export function rules(list: RuleInfo[], lang: Lang, configFile: string): string {
+  const m = messages(lang).cli;
+  const c = m.rulesColumns;
+  const w = Math.max(c.rule.length, ...list.map((r) => r.id.length)) + 2;
+  const row = (a: string, b: string, d: string, e: string, f: string) => `${a.padEnd(w)}${b.padEnd(10)}${d.padEnd(12)}${e.padEnd(5)}${f}`.trimEnd();
+  const lines = list.map((r) => {
+    const changed = Object.entries(r.changed).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(" ");
+    const line = row(r.id, r.level, r.type, r.fixable ? "✔" : "", changed);
+    return r.level === "off" ? pc.dim(line) : line;
+  });
+  return [pc.bold(row(c.rule, c.level, c.type, c.fix, c.changed)), ...lines, "", pc.dim(m.rulesHint(configFile))].join("\n");
+}
+
