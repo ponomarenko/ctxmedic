@@ -86,31 +86,90 @@ describe("history compares like with like", () => {
   });
 });
 
-describe("consult --ai", () => {
-  it("calls the Anthropic Messages API without the SDK", async () => {
-    let seen: { url?: string; headers?: http.IncomingHttpHeaders; body?: any } = {};
-    const server = http.createServer((req, res) => {
-      let raw = "";
-      req.on("data", (c) => (raw += c));
-      req.on("end", () => {
-        seen = { url: req.url, headers: req.headers, body: JSON.parse(raw) };
-        res.setHeader("content-type", "application/json");
-        res.end(JSON.stringify({ stop_reason: "end_turn", content: [{ type: "text", text: "a" }, { type: "tool_use" }, { type: "text", text: "b" }] }));
-      });
+type Seen = { url?: string; headers?: http.IncomingHttpHeaders; body?: any };
+const sse = (events: object[]) => events.map((e) => `event: ${(e as { type: string }).type}\ndata: ${JSON.stringify(e)}\n\n`).join("");
+const text = (index: number, t: string) => [
+  { type: "content_block_start", index, content_block: { type: "text", text: "" } },
+  { type: "content_block_delta", index, delta: { type: "text_delta", text: t } },
+  { type: "content_block_stop", index },
+];
+const start = (model: string) => ({ type: "message_start", message: { model } });
+const stop = (reason: string) => ({ type: "message_delta", delta: { stop_reason: reason } });
+
+/** Runs `fn` against a fake Anthropic API; `reply` writes the response (null: never answer). */
+async function withApi(reply: object[] | null, env: Record<string, string>, fn: (seen: Seen) => Promise<void>) {
+  const seen: Seen = {};
+  const server = http.createServer((req, res) => {
+    let raw = "";
+    req.on("data", (c) => (raw += c));
+    req.on("end", () => {
+      Object.assign(seen, { url: req.url, headers: req.headers, body: JSON.parse(raw) });
+      if (!reply) return;
+      res.setHeader("content-type", "text/event-stream");
+      res.end(sse(reply));
     });
-    await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
-    const env = { ...process.env };
-    process.env.ANTHROPIC_BASE_URL = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
-    process.env.ANTHROPIC_API_KEY = "test-key";
-    try {
-      expect(await askAi("anthropic", "hi")).toBe("a\nb");
+  });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const saved = { ...process.env };
+  process.env.ANTHROPIC_BASE_URL = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+  process.env.ANTHROPIC_API_KEY = "test-key";
+  delete process.env.CTXMEDIC_AI_MODEL;
+  Object.assign(process.env, env);
+  try {
+    await fn(seen);
+  } finally {
+    process.env = saved;
+    server.closeAllConnections();
+    server.close();
+  }
+}
+
+describe("consult --ai", () => {
+  it("streams the Anthropic Messages API without the SDK and opts into fallbacks", async () => {
+    const reply = [start("claude-opus-5-5"), ...text(0, "a"), { type: "content_block_start", index: 1, content_block: { type: "tool_use" } }, ...text(2, "b"), stop("end_turn"), { type: "message_stop" }];
+    await withApi(reply, {}, async (seen) => {
+      const progress: number[] = [];
+      expect(await askAi("anthropic", "hi", (n) => progress.push(n))).toEqual({ text: "a\nb", model: "claude-opus-5-5", refused: false });
+      expect(progress.at(-1)).toBe(2);
       expect(seen.url).toBe("/v1/messages");
       expect(seen.headers?.["x-api-key"]).toBe("test-key");
       expect(seen.headers?.["anthropic-version"]).toBe("2023-06-01");
-      expect(seen.body.messages).toEqual([{ role: "user", content: "hi" }]);
-    } finally {
-      process.env = env;
-      server.close();
-    }
+      expect(seen.headers?.["anthropic-beta"]).toBe("server-side-fallback-2026-07-01");
+      expect(seen.body).toMatchObject({ stream: true, fallbacks: "default", messages: [{ role: "user", content: "hi" }] });
+    });
+  });
+
+  it("drops the declined partial and names the fallback model", async () => {
+    const reply = [
+      start("claude-opus-5-5"),
+      ...text(0, "partial from the declined model"),
+      { type: "content_block_start", index: 1, content_block: { type: "fallback", from: { model: "claude-opus-5-5" }, to: { model: "claude-opus-4-8" } } },
+      { type: "content_block_stop", index: 1 },
+      ...text(2, "review"),
+      stop("end_turn"),
+    ];
+    await withApi(reply, {}, async () => {
+      expect(await askAi("anthropic", "hi")).toEqual({ text: "review", model: "claude-opus-4-8", refused: false });
+    });
+  });
+
+  it("reports a refusal when the whole chain declines", async () => {
+    await withApi([start("claude-opus-5-5"), stop("refusal")], {}, async () => {
+      expect((await askAi("anthropic", "hi")).refused).toBe(true);
+    });
+  });
+
+  it("sends no fallbacks for an overridden model", async () => {
+    await withApi([start("claude-haiku-5-5"), ...text(0, "ok"), stop("end_turn")], { CTXMEDIC_AI_MODEL: "claude-haiku-5-5" }, async (seen) => {
+      expect((await askAi("anthropic", "hi")).text).toBe("ok");
+      expect(seen.body.fallbacks).toBeUndefined();
+      expect(seen.headers?.["anthropic-beta"]).toBeUndefined();
+    });
+  });
+
+  it("times out when no data arrives", async () => {
+    await withApi(null, { CTXMEDIC_AI_TIMEOUT_MS: "50" }, async () => {
+      await expect(askAi("anthropic", "hi")).rejects.toThrow("timeout");
+    });
   });
 });

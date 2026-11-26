@@ -198,3 +198,18 @@ short-lived and scoped to `contents` and `pull-requests` write on this
 repository. A personal access token would tie releases to one account and expire.
 The App client ID is the `RELEASE_APP_CLIENT_ID` secret; its private key is
 the `RELEASE_APP_PRIVATE_KEY` secret.
+
+## ADR-023 consult --ai streams, times out when idle and falls back on the server
+The Anthropic call streams (SSE over `fetch`, still no SDK, ADR-021), so a long
+review does not hit an HTTP timeout. The timeout is an idle limit, not a total
+one: the request fails only when no data arrives for `CTXMEDIC_AI_TIMEOUT_MS`
+(default 120 s), so a slow but steady review is never cut off. Ollama and OpenAI
+keep single requests with the same limit as a total timeout.
+On a refusal the API itself retries: the default model is sent with
+`fallbacks: "default"` (beta `server-side-fallback-2026-07-01`), which picks the
+fallback model by refusal category. That means one request and no hard-coded
+fallback model; a manual retry would send the configuration a second time. The
+CLI names the model that answered. A `fallback` block in the stream drops the
+declined model's partial text, so the answer is printed only after the stream
+ends. With `CTXMEDIC_AI_MODEL` set, no fallback is requested, because the
+override model may not accept it.
