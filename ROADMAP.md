@@ -14,13 +14,13 @@ The first public version (built and merged in #1).
 
 More precise numbers, undo for fixes, tests for every entry point.
 
-- [ ] `ctxmedic restore` to undo fixes from backups (#4)
-- [ ] Measure real MCP schema sizes (#5)
-- [ ] Flag and extend pricing for unknown models (#6)
-- [ ] History: compare only visits with the same scan options (#7)
-- [ ] Tests for the CLI and the local API server (#8)
-- [ ] `consult --ai`: streaming, timeout and refusal fallback (#9)
-- [ ] GitHub Action: ctxmedic CI gate (#12)
+- [x] `ctxmedic restore` to undo fixes from backups (#4)
+- [x] Measure real MCP schema sizes (#5)
+- [x] Flag and extend pricing for unknown models (#6)
+- [x] History: compare only visits with the same scan options (#7)
+- [x] Tests for the CLI and the local API server (#8)
+- [x] `consult --ai`: streaming, timeout and refusal fallback (#9)
+- [x] GitHub Action: ctxmedic CI gate (#12)
 - [ ] Complete `docs/SPEC.md` and reconcile it with the build (#14)
 
 ## v0.3 Web UI
