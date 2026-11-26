@@ -28,6 +28,31 @@ export class ConfigError extends Error {}
 export const levelOf = (e: RuleEntry | undefined): RuleLevel => (e === undefined ? "on" : typeof e === "string" ? e : e[0]);
 export const optionsOf = (e: RuleEntry | undefined): Record<string, unknown> => (Array.isArray(e) && e[1]) || {};
 
+/**
+ * JSON Schema of `ctxmedic.config.json` for editors (`$schema`): like `CtxmedicConfig`, but each rule id gets its
+ * own options and description, and unknown ids are flagged. `packages/cli/schema.json` is this output; a test keeps it fresh.
+ */
+export function configJsonSchema(): Record<string, unknown> {
+  // A private registry, so ids and descriptions do not depend on zod's global one.
+  const reg = z.registry<{ id?: string; description?: string }>();
+  const note = <T extends z.ZodType>(schema: T, meta: { id?: string; description?: string }) => (reg.add(schema, meta), schema);
+  const level = note(RuleLevel.clone(), { id: "RuleLevel", description: '"off", "on" (the rule picks the severity) or a severity to force' });
+  const metas = [...rules.map((r) => [r.id, r.meta] as const), ...Object.entries(finopsMeta)];
+  const entry = (meta: (typeof metas)[number][1]) =>
+    note(z.union([level, z.tuple([level]), z.tuple([level, (meta.options as z.ZodType | undefined) ?? z.object({}).strict()])]), {
+      description: `${meta.description}. ${meta.docs}`,
+    });
+  const editorConfig = z.object({
+    $schema: z.string().optional(),
+    rules: note(z.strictObject(Object.fromEntries(metas.map(([id, meta]) => [id, entry(meta).optional()]))), {
+      description: 'Rule levels and options: "off", "on", a severity, or [level, options].',
+    }).optional(),
+    ignores: note(z.array(z.string()), { description: "Globs over finding paths (project-relative, or ~/ for global files)." }).optional(),
+  });
+  // draft-7: the widest editor support (VS Code included).
+  return z.toJSONSchema(editorConfig, { io: "input", target: "draft-7", unrepresentable: "any", metadata: reg }) as Record<string, unknown>;
+}
+
 /** Reads `ctxmedic.config.json` in the root; no file means an empty config. Invalid config throws, it never falls back silently. */
 export function loadConfig(root: string): CtxmedicConfig {
   const file = path.join(root, CONFIG_FILE);
