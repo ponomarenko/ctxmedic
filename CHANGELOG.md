@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://github.com/ponomarenko/ctxmedic/compare/v0.4.1...v0.5.0) (2026-11-26)
+
+
+### Features
+
+* **clinical:** stream consult --ai with idle timeout and refusal fallback ([#90](https://github.com/ponomarenko/ctxmedic/issues/90)) ([a44c691](https://github.com/ponomarenko/ctxmedic/commit/a44c6915fb8786361876b2a59b6c01d79e0d1fb4))
+
+
+### Documentation
+
+* **roadmap:** tick the closed v0.2 items ([#92](https://github.com/ponomarenko/ctxmedic/issues/92)) ([e5dffda](https://github.com/ponomarenko/ctxmedic/commit/e5dffda6fdd8d54b2986bf4c9e73f7d8c624dc23))
+
 ## [0.4.1](https://github.com/ponomarenko/ctxmedic/compare/v0.4.0...v0.4.1) (2026-11-23)
 
 
