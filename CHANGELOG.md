@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/ponomarenko/ctxmedic/compare/v0.9.0...v0.10.0) (2026-11-26)
+
+
+### Features
+
+* **cli:** ctxmedic rules lists rules and the effective config ([#111](https://github.com/ponomarenko/ctxmedic/issues/111)) ([f8c7ca0](https://github.com/ponomarenko/ctxmedic/commit/f8c7ca07419bb09e294c3d7b1c48b5de0dbed4cb))
+
 ## [0.9.0](https://github.com/ponomarenko/ctxmedic/compare/v0.8.0...v0.9.0) (2026-11-26)
 
 
