@@ -265,6 +265,41 @@
           ],
           "description": "Keep build output and lockfiles out of the AI index with an ignore file. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/FIN_BLOAT_IGNORE.md"
         },
+        "INFO_UNUSED_DISABLE": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "Remove ctxmedic-disable comments that silence nothing. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/INFO_UNUSED_DISABLE.md"
+        },
         "FIN_UNUSED_MCP": {
           "anyOf": [
             {

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import picomatch from "picomatch";
 import { z } from "zod";
-import { finopsMeta, rules } from "./rules/index.js";
+import { allRuleMeta } from "./rules/index.js";
 import { RuleId, Severity, type Finding, type ScannedFile } from "./schema.js";
 
 export const CONFIG_FILE = "ctxmedic.config.json";
@@ -47,11 +47,7 @@ export type RuleInfo = z.infer<typeof RuleInfo>;
 
 /** Every rule and FIN_* detector with its effective level and options under `config`. */
 export function describeRules(config: CtxmedicConfig): RuleInfo[] {
-  const all = [
-    ...rules.map((r) => [r.id, r.meta, "config"] as const),
-    ...Object.entries(finopsMeta).map(([id, meta]) => [id as RuleId, meta, "session-logs"] as const),
-  ];
-  return all.map(([id, meta, source]) => {
+  return allRuleMeta().map(([id, meta, source]) => {
     const entry = config.rules[id];
     const options = (meta.options?.parse(optionsOf(entry)) ?? {}) as Record<string, unknown>;
     const defaults = (meta.options?.parse({}) ?? {}) as Record<string, unknown>;
@@ -69,7 +65,7 @@ export function configJsonSchema(): Record<string, unknown> {
   const reg = z.registry<{ id?: string; description?: string }>();
   const note = <T extends z.ZodType>(schema: T, meta: { id?: string; description?: string }) => (reg.add(schema, meta), schema);
   const level = note(RuleLevel.clone(), { id: "RuleLevel", description: '"off", "on" (the rule picks the severity) or a severity to force' });
-  const metas = [...rules.map((r) => [r.id, r.meta] as const), ...Object.entries(finopsMeta)];
+  const metas = allRuleMeta();
   const entry = (meta: (typeof metas)[number][1]) =>
     note(z.union([level, z.tuple([level]), z.tuple([level, (meta.options as z.ZodType | undefined) ?? z.object({}).strict()])]), {
       description: `${meta.description}. ${meta.docs}`,
@@ -100,7 +96,7 @@ export function loadConfig(root: string): CtxmedicConfig {
   for (const [id, entry] of Object.entries(r.data.rules)) {
     const opts = optionsOf(entry);
     if (!Object.keys(opts).length) continue;
-    const schema = (rules.find((x) => x.id === id)?.meta ?? finopsMeta[id as keyof typeof finopsMeta])?.options;
+    const schema = allRuleMeta().find(([x]) => x === id)?.[1].options;
     if (!schema) throw new ConfigError(`${CONFIG_FILE}: rule ${id} takes no options`);
     const o = schema.safeParse(opts);
     if (!o.success) throw new ConfigError(`${CONFIG_FILE}: rule ${id}: ${z.prettifyError(o.error)}`);
@@ -115,28 +111,80 @@ export function configHash(c: CtxmedicConfig): string {
   return crypto.createHash("sha256").update(JSON.stringify([rulesSorted, c.ignores])).digest("hex").slice(0, 12);
 }
 
-const DIRECTIVE = /<!--\s*ctxmedic-disable\b([\s\S]*?)-->/g;
+// `ctxmedic-disable`, `ctxmedic-disable-line` or `ctxmedic-disable-next-line`; the lookahead keeps the plain
+// form from matching the line forms.
+const DIRECTIVE = /<!--\s*ctxmedic-disable(-next-line|-line)?(?!\w|-(?!->))([\s\S]*?)-->/g;
+
+export interface Directive {
+  kind: "file" | "line" | "next-line";
+  /** Rule ids; empty means every rule. */
+  ids: Set<string>;
+  /** 1-based line of the comment. */
+  line: number;
+  /** The line a line-level directive covers. */
+  target?: number;
+}
+
+const lineAt = (text: string, i: number) => text.slice(0, i).split("\n").length;
+
+/** Every disable comment in a file, with the lines it covers. */
+export function directivesIn(text: string): Directive[] {
+  return [...text.matchAll(DIRECTIVE)].map((m) => {
+    const kind = m[1] === "-next-line" ? "next-line" : m[1] === "-line" ? "line" : "file";
+    const line = lineAt(text, m.index!);
+    const ids = new Set(m[2]!.split("--")[0]!.split(/[\s,]+/).filter(Boolean));
+    const target = kind === "line" ? line : kind === "next-line" ? lineAt(text, m.index! + m[0].length) + 1 : undefined;
+    return { kind, ids, line, target };
+  });
+}
 
 /** Rule ids a file disables with `<!-- ctxmedic-disable [IDS] [-- reason] -->`; "*" means every rule. */
 export function disabledIn(text: string): Set<string> {
   const out = new Set<string>();
-  for (const m of text.matchAll(DIRECTIVE)) {
-    const ids = m[1]!.split("--")[0]!.split(/[\s,]+/).filter(Boolean);
-    if (!ids.length) out.add("*");
-    for (const id of ids) out.add(id);
+  for (const d of directivesIn(text).filter((d) => d.kind === "file")) {
+    if (!d.ids.size) out.add("*");
+    for (const id of d.ids) out.add(id);
   }
   return out;
 }
 
-/** Applies levels, `ignores` and inline disable comments. A finding is ignored only when every one of its files is. */
-export function applyConfig(findings: Finding[], files: ScannedFile[], config: CtxmedicConfig): Finding[] {
+/**
+ * Applies levels, `ignores` and disable comments. A finding is ignored only when every one of its files is.
+ * A file-level comment silences findings that report its file; a line-level one only findings with that `line`
+ * in their first file. With `reportUnused`, comments that silenced nothing become INFO_UNUSED_DISABLE findings.
+ */
+export function applyConfig(findings: Finding[], files: ScannedFile[], config: CtxmedicConfig, opts: { reportUnused?: boolean } = {}): Finding[] {
   const ignored = config.ignores.length ? picomatch(config.ignores, { dot: true }) : () => false;
-  const disabled = new Map(files.filter((f) => f.text?.includes("ctxmedic-disable")).map((f) => [f.rel, disabledIn(f.text!)]));
-  return findings.flatMap((f) => {
-    const level = levelOf(config.rules[f.ruleId]);
-    if (level === "off") return [];
-    if (f.files.length && f.files.every((p) => ignored(p))) return [];
-    if (f.files.some((p) => disabled.get(p)?.has("*") || disabled.get(p)?.has(f.ruleId))) return [];
-    return [level === "on" ? f : { ...f, severity: level }];
+  const comments = new Map(files.filter((f) => f.text?.includes("ctxmedic-disable")).map((f) => [f.rel, directivesIn(f.text!)]));
+  const used = new Set<Directive>();
+  const level = (f: Finding): Finding | null => {
+    const l = levelOf(config.rules[f.ruleId]);
+    if (l === "off" || (f.files.length && f.files.every((p) => ignored(p)))) return null;
+    return l === "on" ? f : { ...f, severity: l };
+  };
+  const out = findings.flatMap((f) => {
+    const kept = level(f);
+    if (!kept) return [];
+    const hits = f.files.flatMap((p, i) =>
+      (comments.get(p) ?? []).filter(
+        (d) => (!d.ids.size || d.ids.has(f.ruleId)) && (d.kind === "file" || (i === 0 && f.line !== undefined && d.target === f.line)),
+      ),
+    );
+    for (const d of hits) used.add(d);
+    return hits.length ? [] : [kept];
   });
+  if (!opts.reportUnused) return out;
+  const unused = [...comments].flatMap(([rel, ds]) =>
+    ds
+      .filter((d) => !used.has(d))
+      .map((d) => ({
+        ruleId: "INFO_UNUSED_DISABLE" as const,
+        severity: "info" as const,
+        message: `${rel}:${d.line}: ctxmedic-disable${d.kind === "file" ? "" : `-${d.kind}`} silences nothing`,
+        files: [rel],
+        line: d.line,
+        data: { ids: [...d.ids], kind: d.kind },
+      })),
+  );
+  return [...out, ...unused.flatMap((f) => level(f) ?? [])];
 }
