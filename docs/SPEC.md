@@ -231,7 +231,7 @@ Every place where the build differs from the original text above.
 
 | Spec says | Build | Covered by |
 |---|---|---|
-| Local HTTP/**WebSocket** API server | HTTP only; the UI fetches on demand | ADR-003; live updates in #11 |
+| Local HTTP/**WebSocket** API server | HTTP plus Server-Sent Events for live updates (data only flows to the UI) | ADR-003 |
 | `FIN_BLOAT_IGNORE` in Module B (`packages/finops`) | A core rule in `packages/core/src/rules/` | ADR-024 |
 | Profiles of 6 harnesses | 7: Cline added (section 1 already lists it) | — |
 | Cursor session logs | Parsed, but Cursor transcripts carry no token usage, so Cursor gives step counts only | ADR-011 |
