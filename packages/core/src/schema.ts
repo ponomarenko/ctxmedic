@@ -144,3 +144,22 @@ export const FinOpsReport = z.object({
   pricingAsOf: z.string(),
 });
 export type FinOpsReport = z.infer<typeof FinOpsReport>;
+
+/** The config graph the UI draws: harnesses, the files they load, symlink targets and duplicates. */
+export const GraphNode = z.object({
+  id: z.string(),
+  kind: z.union([FileRole, z.enum(["harness", "target"])]),
+  label: z.string(),
+  tokens: z.number().int().nonnegative().optional(),
+  broken: z.boolean().optional(),
+  /** Absent on harness nodes, which belong to neither scope. */
+  scope: z.enum(["project", "global"]).optional(),
+});
+export type GraphNode = z.infer<typeof GraphNode>;
+
+export const ConfigGraph = z.object({
+  nodes: z.array(GraphNode),
+  edges: z.array(z.object({ source: z.string(), target: z.string(), kind: z.enum(["loads", "symlink", "duplicate"]) })),
+});
+export type ConfigGraph = z.infer<typeof ConfigGraph>;
+
