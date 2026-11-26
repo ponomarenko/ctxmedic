@@ -25,6 +25,7 @@ Put `ctxmedic.config.json` in the project root (the folder you pass to
 
 ```json
 {
+  "$schema": "./node_modules/ctxmedic/schema.json",
   "rules": {
     "INFO_UNSUPPORTED_SYNTAX": "off",
     "ERR_INVALID_SKILL": "critical",
@@ -33,6 +34,12 @@ Put `ctxmedic.config.json` in the project root (the folder you pass to
   "ignores": ["docs/legacy/**", "~/.claude/skills/experimental/**"]
 }
 ```
+
+`$schema` gives editors autocomplete for rule ids, levels and each rule's
+options, and flags unknown rule ids. The schema ships in the npm package
+(`schema.json`). Without a local install (`npx ctxmedic`), point it at
+`https://unpkg.com/ctxmedic/schema.json` instead; then your editor downloads it,
+ctxmedic itself still makes no network calls.
 
 ### Levels
 

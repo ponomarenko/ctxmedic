@@ -108,6 +108,9 @@ their severity or thresholds, or ignore paths, add `ctxmedic.config.json`:
 { "rules": { "INFO_UNSUPPORTED_SYNTAX": "off", "WARN_CONTEXT_BLOAT": ["on", { "tokens": 6000 }] } }
 ```
 
+Add `"$schema": "./node_modules/ctxmedic/schema.json"` for autocomplete of rule
+ids and options in your editor ([details](docs/rules/README.md#configuring-rules)).
+
 To silence a rule for one Markdown file: `<!-- ctxmedic-disable WARN_CONTEXT_BLOAT -- reason -->`.
 
 ## What ctxmedic reads and writes

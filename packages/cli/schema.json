@@ -1,0 +1,491 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "rules": {
+      "type": "object",
+      "properties": {
+        "ERR_BROKEN_LINK": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "Symlinked configs must point to an existing target, without loops or absolute paths. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/ERR_BROKEN_LINK.md"
+        },
+        "WARN_CONTEXT_BLOAT": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "tokens": {
+                      "default": 3500,
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  }
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "Limit the tokens a harness loads at session start. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/WARN_CONTEXT_BLOAT.md"
+        },
+        "WARN_DUPLICATE_RULES": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "similarity": {
+                      "default": 0.75,
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "exclusiveMaximum": 1
+                    }
+                  }
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "Do not keep near-identical instruction files for different harnesses. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/WARN_DUPLICATE_RULES.md"
+        },
+        "ERR_INVALID_SKILL": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "Skills need valid frontmatter, a unique name and a description with a trigger. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/ERR_INVALID_SKILL.md"
+        },
+        "CRIT_SECRET_LEAK": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "Do not store secrets in plain text in AI configs. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/CRIT_SECRET_LEAK.md"
+        },
+        "INFO_UNSUPPORTED_SYNTAX": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "Flag directives a harness does not understand. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/INFO_UNSUPPORTED_SYNTAX.md"
+        },
+        "FIN_BLOAT_IGNORE": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object",
+                  "properties": {},
+                  "additionalProperties": false
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "Keep build output and lockfiles out of the AI index with an ignore file. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/FIN_BLOAT_IGNORE.md"
+        },
+        "FIN_UNUSED_MCP": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "schemaTokens": {
+                      "default": 1500,
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  }
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "Remove MCP servers that are never called. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/FIN_UNUSED_MCP.md"
+        },
+        "FIN_MODEL_OVERKILL": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "maxSteps": {
+                      "default": 2,
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "minSessions": {
+                      "default": 3,
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  }
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "Route one-shot tasks to a cheaper model. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/FIN_MODEL_OVERKILL.md"
+        },
+        "FIN_CONTEXT_SNOWBALL": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "steps": {
+                      "default": 35,
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "heavySteps": {
+                      "default": 10,
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  }
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "Compact or clear long sessions. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/FIN_CONTEXT_SNOWBALL.md"
+        },
+        "FIN_CACHE_MISS": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "minHitRatio": {
+                      "default": 0.4,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "targetHitRatio": {
+                      "default": 0.7,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "minTokens": {
+                      "default": 1000000,
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  }
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "Keep the prompt cache warm. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/FIN_CACHE_MISS.md"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Rule levels and options: \"off\", \"on\", a severity, or [level, options]."
+    },
+    "ignores": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Globs over finding paths (project-relative, or ~/ for global files)."
+    }
+  },
+  "definitions": {
+    "RuleLevel": {
+      "anyOf": [
+        {
+          "type": "string",
+          "const": "off"
+        },
+        {
+          "type": "string",
+          "const": "on"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "critical",
+            "warning",
+            "info"
+          ]
+        }
+      ],
+      "description": "\"off\", \"on\" (the rule picks the severity) or a severity to force"
+    }
+  }
+}

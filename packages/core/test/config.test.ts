@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { ConfigError, configHash, CtxmedicConfig, disabledIn, examine, finopsMeta, loadConfig, rules } from "@ctxmedic/core";
+import { ConfigError, configHash, configJsonSchema, CtxmedicConfig, disabledIn, examine, finopsMeta, loadConfig, rules } from "@ctxmedic/core";
 import { harnesses } from "@ctxmedic/harnesses";
 
 function project(files: Record<string, string>): string {
@@ -94,3 +94,22 @@ describe("rule meta", () => {
     }
   });
 });
+
+describe("JSON Schema for editors", () => {
+  const schema = configJsonSchema() as any;
+  const ruleProps = schema.properties.rules.properties;
+
+  it("lists every rule with its options and flags unknown ids", () => {
+    expect(Object.keys(ruleProps).sort()).toEqual([...rules.map((r) => r.id), ...Object.keys(finopsMeta)].sort());
+    expect(schema.properties.rules.additionalProperties).toBe(false);
+    const options = (id: string) => ruleProps[id].anyOf.find((v: any) => Array.isArray(v.items) && v.items.length === 2).items[1].properties;
+    expect(options("WARN_CONTEXT_BLOAT").tokens.default).toBe(3500);
+    expect(options("FIN_CONTEXT_SNOWBALL").steps.default).toBe(35);
+    expect(ruleProps.WARN_CONTEXT_BLOAT.description).toContain("docs/rules/WARN_CONTEXT_BLOAT.md");
+  });
+
+  it("matches the published packages/cli/schema.json (update with `pnpm vitest -u`)", async () => {
+    await expect(`${JSON.stringify(schema, null, 2)}\n`).toMatchFileSnapshot("../../cli/schema.json");
+  });
+});
+
