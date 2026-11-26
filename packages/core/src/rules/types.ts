@@ -19,6 +19,11 @@ export interface RuleMeta<O = Record<string, never>> {
   fixable: boolean;
   /** Options a config may pass; defaults make `{}` valid. */
   options?: z.ZodType<O>;
+  /**
+   * Card text for rules that ship outside ctxmedic (built-in cards live in the clinical catalogs).
+   * Without it the card is built from `description` and `docs` (ADR-026).
+   */
+  card?: { name: string; prognosis(f: Finding): string; action(f: Finding): string };
 }
 
 export interface Rule<O = any> {

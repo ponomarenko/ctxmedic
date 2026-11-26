@@ -23,9 +23,9 @@ export const unusedDisableMeta: RuleMeta = {
   fixable: false,
 };
 
-/** Every configurable rule id with its meta and what it reads: config files or session logs. */
-export const allRuleMeta = (): [Finding["ruleId"], RuleMeta<any>, "config" | "session-logs"][] => [
-  ...rules.map((r) => [r.id, r.meta, "config"] as [Finding["ruleId"], RuleMeta<any>, "config"]),
+/** Every configurable rule id (built-in, plus `extraRules` from outside) with its meta and what it reads. */
+export const allRuleMeta = (extraRules: Rule[] = []): [Finding["ruleId"], RuleMeta<any>, "config" | "session-logs"][] => [
+  ...[...rules, ...extraRules].map((r) => [r.id, r.meta, "config"] as [Finding["ruleId"], RuleMeta<any>, "config"]),
   ["INFO_UNUSED_DISABLE", unusedDisableMeta, "config"],
   ...Object.entries(finopsMeta).map(([id, meta]) => [id, meta, "session-logs"] as [Finding["ruleId"], RuleMeta<any>, "session-logs"]),
 ];

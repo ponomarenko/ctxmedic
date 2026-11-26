@@ -170,6 +170,8 @@ describe("JSON Schema for editors", () => {
   it("lists every rule with its options and flags unknown ids", () => {
     expect(Object.keys(ruleProps).sort()).toEqual(allRuleMeta().map(([id]) => id).sort());
     expect(schema.properties.rules.additionalProperties).toBe(false);
+    // Namespaced plugin ids pass by pattern (ADR-026).
+    expect(Object.keys(schema.properties.rules.patternProperties)).toEqual(["^[a-z][a-z0-9-]*\\/[A-Z][A-Z0-9_]*$"]);
     const options = (id: string) => ruleProps[id].anyOf.find((v: any) => Array.isArray(v.items) && v.items.length === 2).items[1].properties;
     expect(options("WARN_CONTEXT_BLOAT").tokens.default).toBe(3500);
     expect(options("FIN_CONTEXT_SNOWBALL").steps.default).toBe(35);

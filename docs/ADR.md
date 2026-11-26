@@ -261,3 +261,26 @@ because they link files of the same rank and would push one of them a rank
 further. `/api/graph` now returns the `ConfigGraph` Zod contract
 (`packages/core/src/schema.ts`) like every other route (ADR-002). The layout is
 a pure function (`layout` in `packages/ui/src/Graph.tsx`) with its own test.
+
+## ADR-026 Rule ids with namespaces
+Rules from outside ctxmedic use namespaced ids: `plugin/RULE_NAME` (pattern
+`EXTERNAL_RULE_ID` in `packages/core/src/schema.ts`). Built-in ids stay a closed
+enum (`BuiltinRuleId`), so the clinical catalogs must still have a card for
+every built-in rule; `RuleId` is the union of both.
+
+External rules reach the core as a parameter, `examine(..., { extraRules })`
+and `checkup({ extraRules })`, not through a global registry, so tests and the
+CLI decide exactly what runs. They run after the built-in rules and go through
+the same config (levels, options, `ignores`, disable comments).
+
+- **Card.** A rule may bring `meta.card`; otherwise the card is built from
+  `meta.description` and `meta.docs` with templates from the message catalog.
+  External cards are not translated.
+- **Score.** Unchanged: penalties by severity (ADR-012), capped per rule id.
+- **Config.** A namespaced id with only a level is kept even when its rule is
+  not loaded (the plugin may be off); options for a rule that is not loaded
+  fail, because nothing can check them. The JSON Schema accepts namespaced
+  ids by pattern.
+
+Loading rules from npm packages (plugins) is the next step and needs its own
+privacy ADR.

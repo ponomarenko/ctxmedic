@@ -1,6 +1,6 @@
 import path from "node:path";
 import { applyConfig, levelOf, loadConfig, optionsOf, type CtxmedicConfig } from "./config.js";
-import { runRules } from "./rules/index.js";
+import { rules, runRules, type Rule } from "./rules/index.js";
 import { scan, type ScanOptions } from "./scan.js";
 import { PatientVitals, type Finding, type HarnessProfile, type ScannedFile } from "./schema.js";
 import { detectedHarnesses, startupLoad, type StartupLoad } from "./vitals.js";
@@ -15,16 +15,22 @@ export interface Examination {
 }
 
 /** Scan + rules: everything about the config, nothing about logs. */
-export async function examine(root: string, profiles: HarnessProfile[], opts: ScanOptions = {}): Promise<Examination> {
+export interface ExamineOptions extends ScanOptions {
+  /** Rules from outside ctxmedic (namespaced ids, ADR-026); they run after the built-in ones. */
+  extraRules?: Rule[];
+}
+
+export async function examine(root: string, profiles: HarnessProfile[], opts: ExamineOptions = {}): Promise<Examination> {
   root = path.resolve(root);
-  const config = loadConfig(root);
+  const extraRules = opts.extraRules ?? [];
+  const config = loadConfig(root, extraRules);
   const files = await scan(root, profiles, opts);
   const startup = startupLoad(files, profiles);
   const entries = Object.entries(config.rules);
   const off = new Set(entries.filter(([, e]) => levelOf(e) === "off").map(([id]) => id));
   const options = Object.fromEntries(entries.map(([id, e]) => [id, optionsOf(e)]));
   // Unused disable comments are judged here: FIN_* log findings never point at Markdown files.
-  const findings = applyConfig(await runRules({ root, files, profiles, startup }, undefined, options, off), files, config, { reportUnused: true });
+  const findings = applyConfig(await runRules({ root, files, profiles, startup }, [...rules, ...extraRules], options, off), files, config, { reportUnused: true });
   const vitals = PatientVitals.parse({
     root,
     scannedAt: new Date().toISOString(),
