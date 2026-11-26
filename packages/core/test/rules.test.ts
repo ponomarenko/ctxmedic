@@ -102,3 +102,53 @@ describe("schema defaults", () => {
     expect(h.files.instructions.global).toEqual([]);
   });
 });
+
+describe("WARN_STALE_REFERENCE", () => {
+  const md = [
+    "# Project", // 1
+    "Helpers live in `src/api.ts` and `src/legacy/api.ts`.", // 2
+    "See [the guide](docs/guide.md) and [old notes](docs/old.md#intro).", // 3
+    "@docs/extra.md", // 4
+    "Run `pnpm run lint` before you push, then `pnpm run lint:all`.", // 5
+    "Not paths: `schema.ts`, `rules/`, `https://x.dev/a.md`, `/api/graph`, `~/.claude/CLAUDE.md`, `packages/*/src`, `docs/<RULE>.md`, `@ctxmedic/core`, `path/to/file.ts`, `--no-global`.", // 6
+    "Build output: `dist/index.js`.", // 7
+    "```bash", // 8
+    "cat src/missing-in-a-code-block.ts", // 9
+    "npm run deploy", // 10
+    "```", // 11
+  ].join("\n");
+  const project = (files: Record<string, string>) => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "ctxmedic-stale-"));
+    for (const [p, c] of Object.entries(files)) {
+      fs.mkdirSync(path.dirname(path.join(root, p)), { recursive: true });
+      fs.writeFileSync(path.join(root, p), c);
+    }
+    return root;
+  };
+  const stale = async (root: string) =>
+    (await examine(root, harnesses, { global: false })).findings.filter((f) => f.ruleId === "WARN_STALE_REFERENCE").map((f) => [f.line, f.data.reference]);
+
+  it("reports missing paths and scripts with their lines, and nothing else", async () => {
+    const root = project({ "CLAUDE.md": md, "src/api.ts": "", "docs/guide.md": "", "package.json": JSON.stringify({ scripts: { lint: "x" } }) });
+    expect(await stale(root)).toEqual([
+      [2, "src/legacy/api.ts"],
+      [3, "docs/old.md"],
+      [4, "docs/extra.md"],
+      [5, "lint:all"],
+      [10, "deploy"],
+    ]);
+  });
+
+  it("resolves paths from the file's own folder too, and honors its options", async () => {
+    const root = project({ ".claude/skills/x/SKILL.md": "---\nname: x\ndescription: Use when testing\n---\nSee `docs/reference.md`, `docs/gone.md` and `api/src/a.ts`.", ".claude/skills/x/docs/reference.md": "", "packages/api/src/a.ts": "" });
+    // docs/reference.md resolves from the skill's folder, api/src/a.ts from packages/ (a shortened monorepo path).
+    expect(await stale(root)).toEqual([[5, "docs/gone.md"]]);
+    const off = project({ "CLAUDE.md": md, "ctxmedic.config.json": JSON.stringify({ rules: { WARN_STALE_REFERENCE: ["on", { allow: ["docs/**", "src/**", "dist/**"], commands: false }] } }) });
+    expect(await stale(off)).toEqual([]);
+  });
+
+  it("can be silenced for one line", async () => {
+    const root = project({ "CLAUDE.md": "<!-- ctxmedic-disable-next-line WARN_STALE_REFERENCE -- made by setup -->\nSee `gen/schema.ts`.\nSee `gen/other.ts`." });
+    expect(await stale(root)).toEqual([[3, "gen/other.ts"]]);
+  });
+});

@@ -3,6 +3,13 @@
 exports[`built-in rules > keep the same diagnoses as before namespaced ids 1`] = `
 [
   [
+    "WARN_STALE_REFERENCE",
+    "Phantom Limb",
+    "The agent will look for docs/extra.md, waste turns searching, or follow advice about code that is gone.",
+    "Point line 4 of AGENTS.md at the file's new path, or delete the reference.",
+    8,
+  ],
+  [
     "WARN_CONTEXT_BLOAT",
     "Context Obesity",
     "5,404 tokens ride along with every request. Rules in the middle get "lost in the middle", attention drifts and the bill grows with each turn.",
