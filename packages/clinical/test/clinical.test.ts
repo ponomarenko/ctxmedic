@@ -97,7 +97,7 @@ const start = (model: string) => ({ type: "message_start", message: { model } })
 const stop = (reason: string) => ({ type: "message_delta", delta: { stop_reason: reason } });
 
 /** Runs `fn` against a fake Anthropic API; `reply` writes the response (null: never answer). */
-async function withApi(reply: object[] | null, env: Record<string, string>, fn: (seen: Seen) => Promise<void>) {
+async function withApi(reply: object[] | null, env: Record<string, string>, fn: (seen: Seen) => Promise<void>, status = 200) {
   const seen: Seen = {};
   const server = http.createServer((req, res) => {
     let raw = "";
@@ -105,6 +105,7 @@ async function withApi(reply: object[] | null, env: Record<string, string>, fn: 
     req.on("end", () => {
       Object.assign(seen, { url: req.url, headers: req.headers, body: JSON.parse(raw) });
       if (!reply) return;
+      if (status !== 200) return res.writeHead(status, { "content-type": "application/json" }).end(JSON.stringify(reply[0]));
       res.setHeader("content-type", "text/event-stream");
       res.end(sse(reply));
     });
@@ -165,6 +166,13 @@ describe("consult --ai", () => {
       expect(seen.body.fallbacks).toBeUndefined();
       expect(seen.headers?.["anthropic-beta"]).toBeUndefined();
     });
+  });
+
+  it("shows the API's reason for an HTTP error", async () => {
+    const body = { type: "error", error: { type: "invalid_request_error", message: "fallbacks: not supported" } };
+    await withApi([body], {}, async () => {
+      await expect(askAi("anthropic", "hi")).rejects.toThrow("Anthropic: HTTP 400 (fallbacks: not supported)");
+    }, 400);
   });
 
   it("times out when no data arrives", async () => {

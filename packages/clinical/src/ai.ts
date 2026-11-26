@@ -123,7 +123,11 @@ async function askAnthropic(prompt: string, onProgress?: (chars: number) => void
         messages: [{ role: "user", content: prompt }],
       }),
     });
-    if (!r.ok || !r.body) throw new Error(`Anthropic: HTTP ${r.status}`);
+    if (!r.ok || !r.body) {
+      // The API's own message says which field it rejected; without it a 400 cannot be diagnosed.
+      const detail = ((await r.json().catch(() => ({}))) as { error?: { message?: string } }).error?.message;
+      throw new Error(`Anthropic: HTTP ${r.status}${detail ? ` (${detail})` : ""}`);
+    }
     // One string per text block; a fallback block drops the declined attempt's partial output.
     let blocks: string[] = [];
     let model: string | undefined;
