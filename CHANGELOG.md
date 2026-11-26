@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.11.0](https://github.com/ponomarenko/ctxmedic/compare/v0.10.0...v0.11.0) (2026-11-26)
+
+
+### Features
+
+* **core:** extends with built-in presets (recommended, strict) ([#115](https://github.com/ponomarenko/ctxmedic/issues/115)) ([2103add](https://github.com/ponomarenko/ctxmedic/commit/2103add61f62bc3c640aed4c613322f15c4efd73))
+* **core:** line-level disable comments and unused disable report ([#113](https://github.com/ponomarenko/ctxmedic/issues/113)) ([149913b](https://github.com/ponomarenko/ctxmedic/commit/149913b8695b9748f7f1e29c59a0121149fadaab))
+
 ## [0.10.0](https://github.com/ponomarenko/ctxmedic/compare/v0.9.0...v0.10.0) (2026-11-26)
 
 
