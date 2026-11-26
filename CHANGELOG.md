@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0](https://github.com/ponomarenko/ctxmedic/compare/v0.6.0...v0.7.0) (2026-11-26)
+
+
+### Features
+
+* **server:** live UI updates over Server-Sent Events ([#97](https://github.com/ponomarenko/ctxmedic/issues/97)) ([4e69638](https://github.com/ponomarenko/ctxmedic/commit/4e69638bc8488f6517281ba518862bcc5829b8bc))
+
+
+### Documentation
+
+* **roadmap:** tick v0.3 and link the v0.4 issues ([#106](https://github.com/ponomarenko/ctxmedic/issues/106)) ([7bb06aa](https://github.com/ponomarenko/ctxmedic/commit/7bb06aa7e131c1a16cd6eb6983857e444cb610db))
+
 ## [0.6.0](https://github.com/ponomarenko/ctxmedic/compare/v0.5.1...v0.6.0) (2026-11-26)
 
 
