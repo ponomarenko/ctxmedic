@@ -16,6 +16,8 @@ export interface ServerOptions {
   /** Directory with the built UI (index.html). */
   publicDir?: string;
   days?: number;
+  /** Load the plugins listed in the config (`ui --plugins`, ADR-027). */
+  plugins?: boolean;
 }
 
 /**
@@ -130,7 +132,7 @@ export function createApp(opts: ServerOptions & { token: string }) {
 
   app.get("/api/checkup", async (c) => {
     const lang = c.req.query("lang") ? resolveLang(c.req.query("lang")) : opts.lang;
-    return c.json(await checkup({ root, lang, days: opts.days, record: c.req.query("record") === "1" }));
+    return c.json(await checkup({ root, lang, days: opts.days, plugins: opts.plugins, record: c.req.query("record") === "1" }));
   });
 
   // Only visits scanned like /api/checkup scans, so the chart shows no fake jumps (ADR-017).
@@ -161,7 +163,7 @@ export function createApp(opts: ServerOptions & { token: string }) {
   app.post("/api/treat/:rx", async (c) => {
     const dryRun = c.req.query("dryRun") === "1";
     try {
-      const r = await treat(c.req.param("rx"), { root, lang: opts.lang, days: opts.days, dryRun });
+      const r = await treat(c.req.param("rx"), { root, lang: opts.lang, days: opts.days, plugins: opts.plugins, dryRun });
       return c.json({ rx: r.diagnosis.rx.id, applied: r.result?.applied ?? [], backupDir: r.result?.backupDir, dryRun, manual: r.manual });
     } catch (e) {
       return c.json({ error: (e as Error).message }, e instanceof FixRefusedError ? 409 : 500);

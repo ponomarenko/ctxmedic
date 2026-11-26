@@ -20,7 +20,7 @@ import {
   type Anamnesis,
   type Lang,
 } from "@ctxmedic/clinical";
-import { applyFix, CONFIG_FILE, ConfigError, describeRules, examine, FixRefusedError, listBackups, loadConfig, restoreBackup, type FixPlan } from "@ctxmedic/core";
+import { applyFix, CONFIG_FILE, ConfigError, describeRules, examine, FixRefusedError, listBackups, loadConfig, loadPlugins, restoreBackup, type FixPlan } from "@ctxmedic/core";
 import { analyze } from "@ctxmedic/finops";
 import { harnesses } from "@ctxmedic/harnesses";
 import { startServer } from "@ctxmedic/server";
@@ -28,6 +28,7 @@ import * as render from "./render.js";
 
 interface Common {
   lang?: string;
+  plugins?: boolean;
   days: string;
   finops: boolean;
   global: boolean;
@@ -39,7 +40,10 @@ const common = (cmd: Command) =>
     .option("--lang <lang>", "interface language (only en for now)")
     .option("--days <n>", "how many days of session logs to analyze", "30")
     .option("--no-finops", "skip session-log (cost) analysis")
-    .option("--no-global", "skip global configs in the home directory");
+    .option("--no-global", "skip global configs in the home directory")
+    .option("--plugins", "load the plugins listed in ctxmedic.config.json (runs their code; or CTXMEDIC_PLUGINS=1)");
+
+const pluginsAllowed = (o: { plugins?: boolean }) => Boolean(o.plugins) || process.env.CTXMEDIC_PLUGINS === "1";
 
 const ctx = (dir: string | undefined, o: Common) => ({
   root: path.resolve(dir ?? "."),
@@ -47,6 +51,7 @@ const ctx = (dir: string | undefined, o: Common) => ({
   days: Math.max(1, Number.parseInt(o.days, 10) || 30),
   finops: o.finops,
   global: o.global,
+  plugins: pluginsAllowed(o),
 });
 
 function fail(e: unknown): never {
@@ -120,10 +125,13 @@ program
   .description("list rules with their effective level and options from ctxmedic.config.json")
   .option("--lang <lang>", "interface language (only en for now)")
   .option("--json", "print the rules as JSON")
-  .action((dir: string | undefined, o: { lang?: string; json?: boolean }) => {
+  .option("--plugins", "also list rules from the plugins in ctxmedic.config.json (runs their code)")
+  .action(async (dir: string | undefined, o: { lang?: string; json?: boolean; plugins?: boolean }) => {
+    const root = path.resolve(dir ?? ".");
     let list;
     try {
-      list = describeRules(loadConfig(path.resolve(dir ?? ".")));
+      const extra = pluginsAllowed(o) ? (await loadPlugins(root, loadConfig(root).plugins)).flatMap((p) => p.rules) : [];
+      list = describeRules(loadConfig(root, extra), extra);
     } catch (e) {
       fail(e);
     }
@@ -217,7 +225,7 @@ common(program.command("ui [path]").description("open the local Web UI (127.0.0.
   .action(async (dir: string | undefined, o: Common & { port: string; open: boolean }) => {
     const c = ctx(dir, o);
     const publicDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
-    const { url } = await startServer({ root: c.root, lang: c.lang, days: c.days, port: Number(o.port), publicDir }).catch(fail);
+    const { url } = await startServer({ root: c.root, lang: c.lang, days: c.days, plugins: c.plugins, port: Number(o.port), publicDir }).catch(fail);
     console.log(`${pc.bold("🩺 ctxmedic UI")}  ${pc.cyan(url)}\n${pc.dim("Ctrl+C to stop. Listening on 127.0.0.1 only.")}`);
     if (o.open) {
       const cmd = process.platform === "darwin" ? "open" : process.platform === "win32" ? "explorer" : "xdg-open";

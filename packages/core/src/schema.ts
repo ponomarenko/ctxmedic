@@ -176,3 +176,12 @@ export const ConfigGraph = z.object({
 });
 export type ConfigGraph = z.infer<typeof ConfigGraph>;
 
+/** A plugin listed in `ctxmedic.config.json`, and whether this run loaded it (ADR-027). */
+export const PluginInfo = z.object({
+  name: z.string(),
+  version: z.string().optional(),
+  loaded: z.boolean(),
+  rules: z.array(RuleId),
+});
+export type PluginInfo = z.infer<typeof PluginInfo>;
+

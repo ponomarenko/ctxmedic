@@ -89,4 +89,20 @@ describe("cli", () => {
     expect(bad.status).toBe(2);
     expect(bad.stderr).toContain("ctxmedic.config.json");
   });
+
+  it("checkup --plugins loads plugins from node_modules and lists them in --json", () => {
+    const root = project({ "CLAUDE.md": "TODO\n", "ctxmedic.config.json": JSON.stringify({ plugins: ["ctxmedic-plugin-demo"] }) });
+    const dir = path.join(root, "node_modules", "ctxmedic-plugin-demo");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "package.json"), JSON.stringify({ name: "ctxmedic-plugin-demo", version: "2.0.0", type: "module", main: "index.js" }));
+    fs.writeFileSync(
+      path.join(dir, "index.js"),
+      `export default { namespace: "demo", rules: [{ id: "demo/NO_TODO", meta: { description: "No TODO lines", type: "suggestion", docs: "", fixable: false }, check: ({ files }) => files.filter((f) => f.text && f.text.includes("TODO")).map((f) => ({ ruleId: "demo/NO_TODO", severity: "warning", message: "todo", files: [f.rel], data: {} })) }] };`,
+    );
+    const on = ClinicalReport.parse(JSON.parse(run(["checkup", ".", "--json", "--plugins"], root).stdout));
+    expect(on.plugins).toEqual([{ name: "ctxmedic-plugin-demo", version: "2.0.0", loaded: true, rules: ["demo/NO_TODO"] }]);
+    const off = run(["checkup", "."], root);
+    expect(off.stdout).toContain("plugins not loaded: ctxmedic-plugin-demo");
+  });
 });
+

@@ -25,6 +25,8 @@ export const CtxmedicConfig = z.object({
   rules: z.partialRecord(RuleId, RuleEntry).default({}),
   /** Globs over finding paths (project-relative, or `~/` for global files). */
   ignores: z.array(z.string()).default([]),
+  /** npm packages in the project's node_modules that add rules; loaded only with `--plugins` (ADR-027). */
+  plugins: z.array(z.string().regex(/^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/, "an npm package name")).default([]),
 });
 export type CtxmedicConfig = z.infer<typeof CtxmedicConfig>;
 
@@ -95,6 +97,7 @@ export function configJsonSchema(): Record<string, unknown> {
     });
   const editorConfig = z.object({
     $schema: z.string().optional(),
+    plugins: note(z.array(z.string()), { description: "npm packages in node_modules that add rules. They run only with --plugins (their code can do anything ctxmedic can)." }).optional(),
     extends: note(z.union([Preset, z.array(Preset)]), { description: "Built-in presets applied before this file's rules: ctxmedic:recommended, ctxmedic:strict." }).optional(),
     rules: note(z.strictObject(Object.fromEntries(metas.map(([id, meta]) => [id, entry(meta).optional()]))), {
       description: 'Rule levels and options: "off", "on", a severity, or [level, options].',
@@ -131,8 +134,8 @@ export function loadConfig(root: string, extraRules: Rule[] = []): CtxmedicConfi
     const opts = optionsOf(entry);
     if (!Object.keys(opts).length) continue;
     const known = allRuleMeta(extraRules).find(([x]) => x === id);
-    // A namespaced rule may come from a plugin that is not loaded: its level is kept, but options cannot be checked.
-    if (!known && id.includes("/")) throw new ConfigError(`${CONFIG_FILE}: rule ${id} is not loaded, so its options cannot be checked`);
+    // A namespaced rule from a plugin that is not loaded this run: keep its settings unchecked; it does not run.
+    if (!known && id.includes("/")) continue;
     const schema = known?.[1].options;
     if (!schema) throw new ConfigError(`${CONFIG_FILE}: rule ${id} takes no options`);
     const o = schema.safeParse(opts);

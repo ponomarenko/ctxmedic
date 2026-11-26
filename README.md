@@ -145,6 +145,17 @@ telemetry, no update checks.
 - The UI server (`ctxmedic ui`) listens on `127.0.0.1` only and requires a
   per-run token for writes.
 
+**Plugins**
+- `"plugins": ["ctxmedic-plugin-foo"]` in `ctxmedic.config.json` adds rules from
+  npm packages in your project's own `node_modules`. ctxmedic never installs or
+  downloads them.
+- They load only when you pass `--plugins` (or set `CTXMEDIC_PLUGINS=1`) on that
+  run; a checked-in config alone never runs plugin code. Without the flag, the
+  report names the plugins it skipped.
+- A loaded plugin runs with ctxmedic's own rights: it can read files and open
+  network connections, and ctxmedic does not sandbox it. Load only plugins you
+  trust. The report lists every loaded plugin with its version (ADR-027).
+
 Secrets found in configs are always masked in output. To verify that the npm
 package was built from this repo by CI, run `npm audit signatures`.
 

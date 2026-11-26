@@ -1,4 +1,4 @@
-import { applyFix, configHash, examine, FixRefusedError, type Finding, type Rule, type FinOpsReport, type FixOptions, type FixResult } from "@ctxmedic/core";
+import { applyFix, configHash, examine, FixRefusedError, loadConfig, loadPlugins, type Finding, type Rule, type FinOpsReport, type FixOptions, type FixResult } from "@ctxmedic/core";
 import { analyze } from "@ctxmedic/finops";
 import { harnesses } from "@ctxmedic/harnesses";
 import { cards, messages, t, type CardText } from "./i18n.js";
@@ -87,6 +87,8 @@ export interface CheckupOptions {
   record?: boolean;
   /** Rules from outside ctxmedic (namespaced ids, ADR-026). */
   extraRules?: Rule[];
+  /** Load the plugins listed in the config; their code runs with ctxmedic's rights (ADR-027). Default false. */
+  plugins?: boolean;
 }
 
 /** The flags of a checkup that change its score, with the same defaults `checkup` uses. */
@@ -98,11 +100,18 @@ export const scanSettings = (opts: Pick<CheckupOptions, "global" | "finops" | "d
 });
 
 export async function checkup(opts: CheckupOptions): Promise<ClinicalReport> {
-  const ex = await examine(opts.root, harnesses, { global: opts.global, extraRules: opts.extraRules });
+  const listed = loadConfig(opts.root).plugins;
+  const loaded = opts.plugins ? await loadPlugins(opts.root, listed) : [];
+  const extraRules = [...(opts.extraRules ?? []), ...loaded.flatMap((p) => p.rules)];
+  const plugins = listed.map((name) => {
+    const p = loaded.find((x) => x.name === name);
+    return { name, version: p?.version, loaded: Boolean(p), rules: p?.rules.map((r) => r.id) ?? [] };
+  });
+  const ex = await examine(opts.root, harnesses, { global: opts.global, extraRules });
   let finops: FinOpsReport | null = null;
   if (opts.finops !== false) finops = await analyze({ root: ex.vitals.root, files: ex.files, days: opts.days ?? 30, config: ex.config });
   const findings = [...ex.findings, ...(finops?.findings ?? [])];
-  const diagnoses = diagnose(findings, opts.lang, loadAnamnesis(), opts.extraRules);
+  const diagnoses = diagnose(findings, opts.lang, loadAnamnesis(), extraRules);
   const score = healthScore(findings);
   const counts = { resuscitation: 0, therapy: 0, preventive: 0 };
   for (const d of diagnoses) counts[d.triage]++;
@@ -122,6 +131,7 @@ export async function checkup(opts: CheckupOptions): Promise<ClinicalReport> {
     diagnoses,
     finops,
     potentialMonthlySavingsUsd: Math.round(savings * 100) / 100,
+    plugins,
   });
   if (opts.record !== false)
     recordVisit({

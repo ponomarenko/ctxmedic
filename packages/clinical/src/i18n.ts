@@ -28,6 +28,8 @@ export interface Messages {
     spend: string;
     runRate: string;
     estimatedPrice: string;
+    pluginsLoaded: (list: string) => string;
+    pluginsSkipped: (names: string) => string;
   };
   cli: {
     noBackups: string;
@@ -170,6 +172,8 @@ const en: Messages = {
     spend: "Spend",
     runRate: "run rate",
     estimatedPrice: "≈ model not in the price table: estimated at Sonnet-class rates",
+    pluginsLoaded: (list) => `plugins: ${list}`,
+    pluginsSkipped: (names) => `plugins not loaded: ${names}. Run with --plugins to load them (their code runs with ctxmedic's rights).`,
   },
   cli: {
     noBackups: "No backups in .ctxmedic/backups: nothing to restore.",

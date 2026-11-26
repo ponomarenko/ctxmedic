@@ -284,3 +284,31 @@ the same config (levels, options, `ignores`, disable comments).
 
 Loading rules from npm packages (plugins) is the next step and needs its own
 privacy ADR.
+
+## ADR-027 Plugins: opt-in per run, no sandbox
+Rules can come from npm packages listed in `ctxmedic.config.json`
+(`"plugins": [...]`). `loadPlugins` (`packages/core/src/plugins.ts`) looks for
+them only in `<project>/node_modules/<name>`, without Node's lookup in parent
+folders, and never installs or downloads anything. The entry point comes from
+the package's `exports["."]`, `module` or `main` and must stay inside the
+package. Each rule is checked by shape (a plugin brings its own zod) and must
+use the plugin's `namespace/` (ADR-026).
+
+**Privacy.** A loaded plugin is code that runs inside ctxmedic with its rights:
+it can read any file the user can and open network connections, which the
+no-network promise (ADR-008) cannot cover. So:
+- **Opt-in per run.** Plugins load only with `--plugins` (or
+  `CTXMEDIC_PLUGINS=1` for CI). The config only lists them: a checked-in
+  config must never run code on `checkup`, the same reason a JS config was
+  rejected (ADR-020). Without the flag the report says which plugins were
+  skipped.
+- **No sandbox.** Node has no reliable in-process sandbox without native
+  dependencies; `vm` is not a security boundary, and a worker or child process
+  still has network access. A fake sandbox would promise more than it keeps.
+- **Visible.** The report (`plugins` in `checkup --json`, and the header in the
+  terminal) lists every loaded plugin with its version and rules, and the
+  README says what a plugin can reach.
+
+Options for rules of a plugin that is not loaded are kept unchecked (they do
+not run), so a run without `--plugins` does not fail on a config written for
+one. Presets from plugins (`extends`) are left for later.
