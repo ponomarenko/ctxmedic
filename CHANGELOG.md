@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.13.0](https://github.com/ponomarenko/ctxmedic/compare/v0.12.0...v0.13.0) (2026-11-26)
+
+
+### Features
+
+* **core:** WARN_STALE_REFERENCE flags paths and scripts that no longer exist ([#120](https://github.com/ponomarenko/ctxmedic/issues/120)) ([d55ddc1](https://github.com/ponomarenko/ctxmedic/commit/d55ddc1e2eb1a3ee0211248e1bcf71be293f2235))
+
+
+### Documentation
+
+* **roadmap:** tick v0.4 Rule ecosystem ([#119](https://github.com/ponomarenko/ctxmedic/issues/119)) ([d6fac4b](https://github.com/ponomarenko/ctxmedic/commit/d6fac4b95d5cf98a572c07cb6015d1d357ed8eb7))
+
 ## [0.12.0](https://github.com/ponomarenko/ctxmedic/compare/v0.11.0...v0.12.0) (2026-11-26)
 
 
