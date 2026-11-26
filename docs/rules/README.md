@@ -90,6 +90,35 @@ A comment that silences nothing is reported as
 [`INFO_UNUSED_DISABLE`](INFO_UNUSED_DISABLE.md), with its line, so stale
 comments do not pile up.
 
+### Presets
+
+Start from a built-in preset with `extends` (a name or a list, applied in
+order); your own `rules` and `ignores` come last and win:
+
+```json
+{ "extends": "ctxmedic:strict", "rules": { "WARN_CONTEXT_BLOAT": "critical" } }
+```
+
+A rule given only a level keeps the preset's options (here `tokens: 2000`, now
+critical); a rule given options replaces them. `ignores` add up.
+
+- `ctxmedic:recommended`: today's defaults, so a project can say it chose them.
+- `ctxmedic:strict`: stricter thresholds, and info-only rules raised to warnings.
+  Rules that grade their own findings (`CRIT_SECRET_LEAK`, `ERR_BROKEN_LINK`)
+  keep their own severities.
+
+| `ctxmedic:strict` changes | Default | Strict |
+|---|---|---|
+| `WARN_CONTEXT_BLOAT` | `tokens: 3500` | `tokens: 2000` |
+| `WARN_DUPLICATE_RULES` | `similarity: 0.75` | `similarity: 0.6` |
+| `INFO_UNSUPPORTED_SYNTAX` | info | warning |
+| `INFO_UNUSED_DISABLE` | info | warning |
+| `FIN_CONTEXT_SNOWBALL` | `steps: 35` | `steps: 25` |
+| `FIN_CACHE_MISS` | `minHitRatio: 0.4` | `minHitRatio: 0.5` |
+| `FIN_MODEL_OVERKILL` | `minSessions: 3` | `minSessions: 2` |
+
+`ctxmedic rules` shows the result: every option a preset changed is listed.
+
 ### Health Score and history
 
 Turned-off and ignored findings do not count toward the Health Score. The trend

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { allRuleMeta, applyConfig, ConfigError, configHash, configJsonSchema, CtxmedicConfig, directivesIn, disabledIn, examine, finopsMeta, loadConfig, rules } from "@ctxmedic/core";
+import { allRuleMeta, applyConfig, ConfigError, configHash, configJsonSchema, CtxmedicConfig, directivesIn, disabledIn, examine, finopsMeta, loadConfig, PRESETS, rules } from "@ctxmedic/core";
 import { harnesses } from "@ctxmedic/harnesses";
 
 function project(files: Record<string, string>): string {
@@ -63,6 +63,44 @@ describe("ctxmedic.config.json", () => {
     const b = configHash(CtxmedicConfig.parse({ rules: { WARN_CONTEXT_BLOAT: "on", ERR_INVALID_SKILL: "off" } }));
     expect(a).toBe(b);
     expect(a).not.toBe("");
+  });
+});
+
+describe("presets (extends)", () => {
+  const load = (c: unknown) => loadConfig(project(cfg(c)));
+
+  it("ctxmedic:strict lowers thresholds and raises info-only rules", async () => {
+    const strict = load({ extends: "ctxmedic:strict" });
+    expect(strict.rules.WARN_CONTEXT_BLOAT).toEqual(["on", { tokens: 2000 }]);
+    expect(strict.rules.INFO_UNSUPPORTED_SYNTAX).toBe("warning");
+    // ~2.5k startup tokens: fine by default, bloat under strict.
+    const mid = { "CLAUDE.md": `# Project\n${"Lorem ipsum dolor sit amet. ".repeat(450)}\n` };
+    expect(await ids(project(mid))).not.toContain("WARN_CONTEXT_BLOAT");
+    expect(await ids(project({ ...mid, ...cfg({ extends: "ctxmedic:strict" }) }))).toContain("WARN_CONTEXT_BLOAT");
+  });
+
+  it("lets the file's own rules win; a level alone keeps the preset's options", () => {
+    const c = load({ extends: ["ctxmedic:recommended", "ctxmedic:strict"], rules: { WARN_CONTEXT_BLOAT: "critical", FIN_CACHE_MISS: ["on", { minHitRatio: 0.3 }] }, ignores: ["a/**"] });
+    expect(c.rules.WARN_CONTEXT_BLOAT).toEqual(["critical", { tokens: 2000 }]);
+    expect(c.rules.FIN_CACHE_MISS).toEqual(["on", { minHitRatio: 0.3 }]);
+    expect(c.ignores).toEqual(["a/**"]);
+    // The resolved rules feed the history hash, so a preset starts a new trend.
+    expect(configHash(load({ extends: "ctxmedic:strict" }))).not.toBe("");
+    expect(configHash(load({ extends: "ctxmedic:recommended" }))).toBe("");
+  });
+
+  it("rejects an unknown preset", () => {
+    expect(() => load({ extends: "ctxmedic:lenient" })).toThrow(ConfigError);
+  });
+
+  it("every preset passes the same option checks as a user config", () => {
+    for (const name of Object.keys(PRESETS)) expect(() => load({ extends: name })).not.toThrow();
+  });
+
+  it("the docs list every rule the strict preset changes", () => {
+    const doc = fs.readFileSync(path.join(__dirname, "../../../docs/rules/README.md"), "utf8");
+    const section = doc.slice(doc.indexOf("### Presets"));
+    for (const id of Object.keys(PRESETS["ctxmedic:strict"].rules)) expect(section, id).toContain(`\`${id}\``);
   });
 });
 

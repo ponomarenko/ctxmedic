@@ -196,6 +196,14 @@ their first file), and comments that silence nothing are reported as
 reports it, and only `examine` asks it to, because `FIN_*` log findings never
 point at Markdown files.
 
+`extends` applies built-in presets (`ctxmedic:recommended`, `ctxmedic:strict`,
+`packages/core/src/presets.ts`) before the file's own settings. A later entry
+replaces an earlier one, except that a level alone keeps the earlier options,
+as in ESLint; `ignores` add up. `loadConfig` returns the resolved config, so
+option checks, `configHash` and `ctxmedic rules` see what actually runs, and a
+change to a preset starts a new history trend. Presets from npm packages wait
+for plugins.
+
 Known limits: adding or removing an inline disable comment changes the score without
 starting a new trend, like any other edit to the files.
 
