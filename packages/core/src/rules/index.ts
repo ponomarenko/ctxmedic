@@ -5,6 +5,7 @@ import { contextBloat } from "./contextBloat.js";
 import { duplicates } from "./duplicates.js";
 import { secretLeak } from "./secretLeak.js";
 import { skills } from "./skills.js";
+import { staleReference } from "./staleReference.js";
 import { syntax } from "./syntax.js";
 import { finopsMeta } from "./finopsMeta.js";
 import { docsUrl, type Rule, type RuleContext, type RuleMeta } from "./types.js";
@@ -12,8 +13,9 @@ import { docsUrl, type Rule, type RuleContext, type RuleMeta } from "./types.js"
 export * from "./types.js";
 export * from "./finopsMeta.js";
 export { similarity } from "./duplicates.js";
+export { staleReferences } from "./staleReference.js";
 
-export const rules: Rule[] = [brokenLink, contextBloat, duplicates, skills, secretLeak, syntax, bloatIgnore];
+export const rules: Rule[] = [brokenLink, contextBloat, duplicates, skills, secretLeak, syntax, bloatIgnore, staleReference];
 
 /** Reported by `applyConfig`, not by a check of its own, so it has meta but no `Rule` object. */
 export const unusedDisableMeta: RuleMeta = {

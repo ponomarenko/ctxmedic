@@ -294,6 +294,58 @@
           ],
           "description": "Keep build output and lockfiles out of the AI index with an ignore file. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/FIN_BLOAT_IGNORE.md"
         },
+        "WARN_STALE_REFERENCE": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "allow": {
+                      "default": [
+                        "node_modules/**",
+                        "dist/**",
+                        "build/**",
+                        "coverage/**",
+                        "out/**"
+                      ],
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "commands": {
+                      "default": true,
+                      "type": "boolean"
+                    }
+                  }
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ],
+          "description": "Paths and scripts named in instructions must exist. https://github.com/ponomarenko/ctxmedic/blob/main/docs/rules/WARN_STALE_REFERENCE.md"
+        },
         "INFO_UNUSED_DISABLE": {
           "anyOf": [
             {

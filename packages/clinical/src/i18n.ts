@@ -115,7 +115,18 @@ const en: Messages = {
         `${f.files[0]}:${f.line} silences ${(d(f, "ids") ?? []).join(", ") || "every rule"}, but nothing there needed it. A stale disable hides the next real problem.`,
       action: (f) => `Delete the ctxmedic-disable comment on line ${f.line} of ${f.files[0]}.`,
     },
-    FIN_BLOAT_IGNORE: {
+WARN_STALE_REFERENCE: {
+      name: "Phantom Limb",
+      prognosis: (f) =>
+        d(f, "kind") === "script"
+          ? `The agent will run \`${d(f, "reference")}\`, fail, and spend turns finding the real script.`
+          : `The agent will look for ${d(f, "reference")}, waste turns searching, or follow advice about code that is gone.`,
+      action: (f) =>
+        d(f, "kind") === "script"
+          ? `Update or delete the "${d(f, "reference")}" command on line ${f.line} of ${f.files[0]}.`
+          : `Point line ${f.line} of ${f.files[0]} at the file's new path, or delete the reference.`,
+    },
+        FIN_BLOAT_IGNORE: {
       name: "Indexing Bloat",
       prognosis: (f) => `${d(f, "harness")} indexes build output and lockfiles. Search results fill with junk and retrieval burns tokens.`,
       action: (f) => `Create ${d(f, "ignoreFile")} with the standard exclusions.`,
