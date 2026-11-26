@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { ConfigError, configHash, CtxmedicConfig, disabledIn, examine, loadConfig, rules } from "@ctxmedic/core";
+import { ConfigError, configHash, CtxmedicConfig, disabledIn, examine, finopsMeta, loadConfig, rules } from "@ctxmedic/core";
 import { harnesses } from "@ctxmedic/harnesses";
 
 function project(files: Record<string, string>): string {
@@ -51,6 +51,10 @@ describe("ctxmedic.config.json", () => {
     expect(() => loadConfig(project(cfg({ rules: { WARN_CONTEXT_BLOAT: ["on", { tokens: -1 }] } })))).toThrow(/WARN_CONTEXT_BLOAT/);
     expect(() => loadConfig(project(cfg({ rules: { ERR_INVALID_SKILL: ["on", { x: 1 }] } })))).toThrow(/takes no options/);
     expect(() => loadConfig(project({ "ctxmedic.config.json": "{ nope" }))).toThrow(ConfigError);
+    // FIN_* detectors run in finops, but core validates their options too (ADR-020).
+    expect(loadConfig(project(cfg({ rules: { FIN_CONTEXT_SNOWBALL: ["on", { steps: 50 }] } }))).rules.FIN_CONTEXT_SNOWBALL).toEqual(["on", { steps: 50 }]);
+    expect(() => loadConfig(project(cfg({ rules: { FIN_CONTEXT_SNOWBALL: ["on", { steps: -1 }] } })))).toThrow(ConfigError);
+    expect(() => loadConfig(project(cfg({ rules: { FIN_CACHE_MISS: ["on", { minHitRatio: 0.8, targetHitRatio: 0.5 }] } })))).toThrow(/targetHitRatio/);
   });
 
   it("hashes only settings that change the score", () => {
@@ -78,10 +82,15 @@ describe("inline disable comments", () => {
 });
 
 describe("rule meta", () => {
-  it("every rule has a description and a docs page", () => {
-    for (const r of rules) {
-      expect(r.meta.description.length).toBeGreaterThan(10);
-      expect(fs.existsSync(path.join(__dirname, "../../../docs/rules", `${r.id}.md`))).toBe(true);
+  it("every rule and FIN_* detector has a description and a docs page that lists its options", () => {
+    const all = [...rules.map((r) => [r.id, r.meta] as const), ...Object.entries(finopsMeta)];
+    for (const [id, meta] of all) {
+      expect(meta.description.length).toBeGreaterThan(10);
+      const doc = path.join(__dirname, "../../../docs/rules", `${id}.md`);
+      expect(fs.existsSync(doc)).toBe(true);
+      // Every option key appears in the page's options table.
+      const shape = (meta.options as { shape?: Record<string, unknown>; def?: { schema?: { shape?: Record<string, unknown> } } } | undefined);
+      for (const key of Object.keys(shape?.shape ?? shape?.def?.schema?.shape ?? {})) expect(fs.readFileSync(doc, "utf8"), `${id}: ${key}`).toContain(`\`${key}\``);
     }
   });
 });

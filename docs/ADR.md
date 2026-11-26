@@ -184,9 +184,12 @@ ecosystem (see the roadmap, "v0.4 Rule ecosystem").
   and for older history), so the trend compares only visits with the same
   config (extends ADR-017).
 
-Known limits: `FIN_*` detectors take no options and have no `meta` yet (they
-are functions in `finops`, not `Rule` objects); disables are per file, not per
-line; adding or removing an inline disable comment changes the score without
+`FIN_*` detectors have `meta` and options too: the contract (`finopsMeta`,
+`packages/core/src/rules/finopsMeta.ts`) lives in core so `loadConfig` checks
+every rule's options in one place, and the check lives in `finops`, which
+depends on core. Detectors turned off do not run.
+
+Known limits: disables are per file, not per line; adding or removing an inline disable comment changes the score without
 starting a new trend, like any other edit to the files.
 
 ## ADR-021 No Anthropic SDK

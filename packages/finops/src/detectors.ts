@@ -1,16 +1,19 @@
 import path from "node:path";
-import { mcpServers, type Finding, type ScannedFile } from "@ctxmedic/core";
+import { finopsMeta, mcpServers, type FinId, type FinOptionsOf, type Finding, type RuleMeta, type ScannedFile } from "@ctxmedic/core";
 import { costOf, lighterModel, priceOf } from "./pricing.js";
 import type { SessionStats } from "./parsers.js";
 
-export const MCP_SCHEMA_TOKENS = 1_500; // per server, when the logs do not record its tool definitions (ADR-018)
-export const SNOWBALL_STEPS = 35;
-export const SNOWBALL_HEAVY_STEPS = 10;
-export const CACHE_HIT_MIN = 0.4;
-export const CACHE_HIT_TARGET = 0.7;
-export const CACHE_MIN_TOKENS = 1_000_000;
-export const OVERKILL_MAX_STEPS = 2;
-export const OVERKILL_MIN_SESSIONS = 3;
+// Defaults now live with the options contract in core; re-exported for existing imports.
+export {
+  CACHE_HIT_MIN,
+  CACHE_HIT_TARGET,
+  CACHE_MIN_TOKENS,
+  MCP_SCHEMA_TOKENS,
+  OVERKILL_MAX_STEPS,
+  OVERKILL_MIN_SESSIONS,
+  SNOWBALL_HEAVY_STEPS,
+  SNOWBALL_STEPS,
+} from "@ctxmedic/core";
 
 export interface DetectorInput {
   sessions: SessionStats[];
@@ -28,7 +31,15 @@ const dominant = (sessions: SessionStats[]) => {
 };
 const sev = (usd: number): Finding["severity"] => (usd >= 1 ? "warning" : "info");
 
-export function unusedMcp({ sessions, days, files, root }: DetectorInput): Finding[] {
+/** A session-log rule: core holds its `meta` and options contract (`finopsMeta`), finops holds the check. */
+export interface Detector<K extends FinId = FinId> {
+  id: K;
+  meta: RuleMeta<FinOptionsOf<K>>;
+  check(input: DetectorInput, options: FinOptionsOf<K>): Finding[];
+}
+const detector = <K extends FinId>(id: K, check: Detector<K>["check"]): Detector<K> => ({ id, meta: finopsMeta[id] as RuleMeta<FinOptionsOf<K>>, check });
+
+export const unusedMcp = detector("FIN_UNUSED_MCP", ({ sessions, days, files, root }, { schemaTokens: fallback }) => {
   const out: Finding[] = [];
   const calls: Record<string, number> = {};
   for (const s of sessions) for (const [k, n] of Object.entries(s.mcpCalls)) calls[k] = (calls[k] ?? 0) + n;
@@ -44,7 +55,7 @@ export function unusedMcp({ sessions, days, files, root }: DetectorInput): Findi
       if (!idle.length) continue;
       // Real size from the logs when a session recorded the server's tool definitions (ADR-018).
       const measured = idle.map((name) => Math.max(0, ...hs.map((s) => s.mcpSchemaTokens?.[name] ?? s.mcpSchemaTokens?.[name.replace(/[^\w]/g, "_")] ?? 0)) || null);
-      const schemaTokens = measured.reduce<number>((n, t) => n + (t ?? MCP_SCHEMA_TOKENS), 0);
+      const schemaTokens = measured.reduce<number>((n, t) => n + (t ?? fallback), 0);
       const estimated = measured.some((t) => t === null);
       const usd = monthly((schemaTokens * steps * priceOf(model).price.cacheRead) / 1e6, days);
       out.push({
@@ -58,12 +69,12 @@ export function unusedMcp({ sessions, days, files, root }: DetectorInput): Findi
     }
   }
   return out;
-}
+});
 
-export function modelOverkill({ sessions, days }: DetectorInput): Finding[] {
+export const modelOverkill = detector("FIN_MODEL_OVERKILL", ({ sessions, days }, { maxSteps, minSessions }) => {
   const byModel = new Map<string, { n: number; cost: number; cheaper: number; to: string }>();
   for (const s of sessions) {
-    if (s.steps === 0 || s.steps > OVERKILL_MAX_STEPS) continue;
+    if (s.steps === 0 || s.steps > maxSteps) continue;
     for (const [model, u] of Object.entries(s.models)) {
       const to = lighterModel(model);
       if (!to) continue;
@@ -75,7 +86,7 @@ export function modelOverkill({ sessions, days }: DetectorInput): Finding[] {
     }
   }
   return [...byModel]
-    .filter(([, e]) => e.n >= OVERKILL_MIN_SESSIONS)
+    .filter(([, e]) => e.n >= minSessions)
     .map(([model, e]) => {
       const usd = monthly(e.cost - e.cheaper, days);
       return {
@@ -87,10 +98,10 @@ export function modelOverkill({ sessions, days }: DetectorInput): Finding[] {
         monthlySavingsUsd: round(usd),
       };
     });
-}
+});
 
-export function contextSnowball({ sessions, days }: DetectorInput): Finding[] {
-  const bad = sessions.filter((s) => s.steps > SNOWBALL_STEPS && s.heavySteps >= SNOWBALL_HEAVY_STEPS && s.compactions === 0);
+export const contextSnowball = detector("FIN_CONTEXT_SNOWBALL", ({ sessions, days }, { steps, heavySteps }) => {
+  const bad = sessions.filter((s) => s.steps > steps && s.heavySteps >= heavySteps && s.compactions === 0);
   if (!bad.length) return [];
   let usd = 0;
   for (const s of bad) {
@@ -103,15 +114,15 @@ export function contextSnowball({ sessions, days }: DetectorInput): Finding[] {
     {
       ruleId: "FIN_CONTEXT_SNOWBALL",
       severity: sev(usd),
-      message: `${bad.length} session(s) ran >${SNOWBALL_STEPS} steps with 100k+ context and no /clear or /compact`,
+      message: `${bad.length} session(s) ran >${steps} steps with 100k+ context and no /clear or /compact`,
       files: bad.slice(0, 5).map((s) => `session ${path.basename(s.file, ".jsonl")}`),
       data: { sessions: bad.length, worstSteps: worst.steps, worstMaxContext: worst.maxContext, days },
       monthlySavingsUsd: round(usd),
     },
   ];
-}
+});
 
-export function cacheMiss({ sessions, days }: DetectorInput): Finding[] {
+export const cacheMiss = detector("FIN_CACHE_MISS", ({ sessions, days }, { minHitRatio, targetHitRatio, minTokens }) => {
   const out: Finding[] = [];
   for (const h of ["claude-code", "codex"] as const) {
     const hs = sessions.filter((s) => s.harness === h);
@@ -120,21 +131,21 @@ export function cacheMiss({ sessions, days }: DetectorInput): Finding[] {
     let write = 0;
     for (const s of hs) for (const u of Object.values(s.models)) (input += u.input), (read += u.cacheRead), (write += u.cacheWrite);
     const total = input + read + write;
-    if (total < CACHE_MIN_TOKENS) continue;
+    if (total < minTokens) continue;
     const ratio = read / total;
-    if (ratio >= CACHE_HIT_MIN) continue;
+    if (ratio >= minHitRatio) continue;
     const p = priceOf(dominant(hs) ?? "claude-sonnet-5-5").price;
-    const usd = monthly(((CACHE_HIT_TARGET - ratio) * total * (p.input - p.cacheRead)) / 1e6, days);
+    const usd = monthly(((targetHitRatio - ratio) * total * (p.input - p.cacheRead)) / 1e6, days);
     out.push({
       ruleId: "FIN_CACHE_MISS",
       severity: sev(usd),
-      message: `${h} prompt-cache hit ratio is ${Math.round(ratio * 100)}% (healthy: ≥${CACHE_HIT_MIN * 100}%)`,
+      message: `${h} prompt-cache hit ratio is ${Math.round(ratio * 100)}% (healthy: ≥${Math.round(minHitRatio * 100)}%)`,
       files: [],
       data: { harness: h, cacheHitRatio: ratio, totalInputTokens: total, days },
       monthlySavingsUsd: round(Math.max(0, usd)),
     });
   }
   return out;
-}
+});
 
-export const detectors = [unusedMcp, modelOverkill, contextSnowball, cacheMiss];
+export const detectors: Detector[] = [unusedMcp, modelOverkill, contextSnowball, cacheMiss] as Detector[];

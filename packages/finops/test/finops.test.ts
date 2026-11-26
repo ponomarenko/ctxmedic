@@ -4,6 +4,7 @@ import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { countTokens, examine } from "@ctxmedic/core";
 import { harnesses } from "@ctxmedic/harnesses";
+import { CtxmedicConfig } from "@ctxmedic/core";
 import { analyze, buildReport, costOf, loadCache, loadSessions, MCP_SCHEMA_TOKENS, parseClaude, parseCodex, unusedMcp } from "@ctxmedic/finops";
 import { diagnose } from "@ctxmedic/clinical";
 
@@ -72,6 +73,23 @@ describe("analyze", () => {
     expect(r.potentialMonthlySavingsUsd).toBeGreaterThan(0);
     expect(Object.keys(loadCache().files)).toHaveLength(5);
   });
+
+  it("takes detector thresholds from the config and skips detectors turned off", async () => {
+    const ex = await examine(root, harnesses);
+    const sessions = await loadSessions(30, now);
+    const run = (rules: Record<string, unknown>) =>
+      buildReport(sessions, { root, files: ex.files, days: 30, config: CtxmedicConfig.parse({ rules }) }).findings.map((f) => f.ruleId);
+    expect(run({})).toContain("FIN_CONTEXT_SNOWBALL");
+    expect(run({ FIN_CONTEXT_SNOWBALL: ["on", { steps: 1000 }] })).not.toContain("FIN_CONTEXT_SNOWBALL");
+    expect(run({ FIN_CACHE_MISS: ["on", { minHitRatio: 0 }] })).not.toContain("FIN_CACHE_MISS");
+    expect(run({ FIN_MODEL_OVERKILL: ["on", { minSessions: 99 }] })).not.toContain("FIN_MODEL_OVERKILL");
+    expect(run({ FIN_UNUSED_MCP: "off" })).not.toContain("FIN_UNUSED_MCP");
+    const mcp = (schemaTokens: number) =>
+      buildReport(sessions, { root, files: ex.files, days: 30, config: CtxmedicConfig.parse({ rules: { FIN_UNUSED_MCP: ["on", { schemaTokens }] } }) }).findings.find(
+        (f) => f.ruleId === "FIN_UNUSED_MCP",
+      )!.data.schemaTokens;
+    expect(Number(mcp(3000))).toBe(2 * Number(mcp(1500)));
+  });
 });
 
 describe("MCP schema sizes", () => {
@@ -105,11 +123,11 @@ describe("MCP schema sizes", () => {
   it("FIN_UNUSED_MCP uses the measured size and falls back to the estimate", async () => {
     const ex = await examine(root, harnesses);
     const sessions = await loadSessions(30, now);
-    const base = unusedMcp({ sessions, days: 30, files: ex.files, root })[0]!;
+    const base = unusedMcp.check({ sessions, days: 30, files: ex.files, root }, { schemaTokens: MCP_SCHEMA_TOKENS })[0]!;
     expect(base.data).toMatchObject({ server: "jira", schemaTokens: MCP_SCHEMA_TOKENS, estimated: true });
 
     const measured = sessions.map((s) => (s.harness === "claude-code" ? { ...s, mcpSchemaTokens: { jira: 4_321 } } : s));
-    const f = unusedMcp({ sessions: measured, days: 30, files: ex.files, root })[0]!;
+    const f = unusedMcp.check({ sessions: measured, days: 30, files: ex.files, root }, { schemaTokens: MCP_SCHEMA_TOKENS })[0]!;
     expect(f.data).toMatchObject({ schemaTokens: 4_321, estimated: false });
     expect(f.monthlySavingsUsd!).toBeGreaterThan(base.monthlySavingsUsd!);
     expect(diagnose([f], "en")[0]!.prognosis).toContain("measured from session logs");

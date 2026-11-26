@@ -26,7 +26,14 @@ Good:
 
 ## Options
 
-None yet: the thresholds are constants in `packages/finops/src/detectors.ts` (see the roadmap).
+| Option | Type | Default | Meaning |
+|---|---|---|---|
+| `steps` | positive integer | `35` | A session longer than this many steps can snowball. |
+| `heavySteps` | positive integer | `10` | How many of its steps must carry 100k+ context. |
+
+```json
+{ "rules": { "FIN_CONTEXT_SNOWBALL": ["on", { "steps": 60 }] } }
+```
 
 ## How to disable
 
