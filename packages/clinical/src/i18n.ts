@@ -48,6 +48,10 @@ export interface Messages {
     nothingSent: string;
     consulting: (provider: string) => string;
     secondOpinion: string;
+    receiving: (chars: number) => string;
+    answeredBy: (model: string) => string;
+    aiRefused: string;
+    aiTimeout: (seconds: number) => string;
     goodbye: string;
     cancelled: string;
   };
@@ -174,6 +178,10 @@ const en: Messages = {
     nothingSent: "Nothing was sent.",
     consulting: (provider) => `Consulting ${provider}`,
     secondOpinion: "Second opinion",
+    receiving: (chars) => `Receiving the review (${n(chars)} characters)`,
+    answeredBy: (model) => `Second opinion from ${model}`,
+    aiRefused: "The model declined to review this configuration.",
+    aiTimeout: (seconds) => `No answer for ${seconds} s. Set CTXMEDIC_AI_TIMEOUT_MS to wait longer.`,
     goodbye: "Get well soon! Follow-up: ctxmedic checkup",
     cancelled: "Cancelled",
   },

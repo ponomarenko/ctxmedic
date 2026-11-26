@@ -136,6 +136,8 @@ telemetry, no update checks.
 - Only `consult --ai`, which you run yourself. It replaces secrets with
   `[REDACTED]`, then sends your instruction files either to a local Ollama or,
   after you confirm, to Anthropic or OpenAI with your own key.
+  `CTXMEDIC_AI_MODEL` picks the model; `CTXMEDIC_AI_TIMEOUT_MS` (default 120000)
+  is how long it waits without an answer.
 - The UI server (`ctxmedic ui`) listens on `127.0.0.1` only and requires a
   per-run token for writes.
 

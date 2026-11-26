@@ -5,6 +5,7 @@ import * as p from "@clack/prompts";
 import { Command } from "commander";
 import pc from "picocolors";
 import {
+  aiTimeoutMs,
   askAi,
   buildConsultPrompt,
   checkup,
@@ -175,9 +176,16 @@ common(program.command("consult [path]").description("interactive appointment: a
         if (p.isCancel(ok) || !ok) return p.outro(m.nothingSent);
       }
       s.start(m.consulting(provider));
-      const answer = await askAi(provider, prompt).catch((e: Error) => `Error: ${e.message}`);
-      s.stop(m.secondOpinion);
-      console.log(answer);
+      const res = await askAi(provider, prompt, (chars) => s.message(m.receiving(chars))).catch((e: Error) =>
+        e.message === "timeout" ? m.aiTimeout(aiTimeoutMs() / 1000) : `Error: ${e.message}`,
+      );
+      if (typeof res === "string") {
+        s.stop(m.secondOpinion);
+        console.log(res);
+      } else {
+        s.stop(res.model ? m.answeredBy(res.model) : m.secondOpinion);
+        console.log(res.refused ? m.aiRefused : res.text);
+      }
     }
     p.outro(m.goodbye);
   });
