@@ -1,9 +1,11 @@
 # ctxmedic: original product spec
 
 > English translation of the original spec (written in Ukrainian) that v0.1 was built
-> from. The text **stops at Stage 2, item 3** (ClinicalEngine). Stages 3+ (CLI,
-> server, UI, release) were derived from section 2 and recorded in `docs/ADR.md`.
-> The missing part is tracked in issue #14.
+> from. The original text **stops at Stage 2, item 3** (ClinicalEngine). Everything
+> after that point (the rest of Stage 2.3 and Stages 3–5) is **reconstructed, not
+> original**: it was written after the build, from section 2, `docs/ADR.md` and the
+> code, and is marked as such below. "Spec vs build" at the end lists every place where
+> the build differs from the original text, with the issue or ADR that covers it.
 >
 > Since then: the author's name uses the passport spelling (Vitalii; earlier Vitaliy),
 > and English is the only interface language for now (ADR-015).
@@ -182,4 +184,57 @@ Detect overspending patterns and generate savings prescriptions ($ and %):
    real costs, cache hit ratio and potential savings in dollars.
 3. Implement the `ClinicalEngine` (`packages/clinical`), which produces **
 
-<!-- The original spec text stops here. The rest is tracked in issue #14. -->
+<!-- The original spec text stops here. Everything below is reconstructed (issue #14). -->
+
+> **Reconstructed from here on, not original text.**
+
+… clinical diagnoses from raw findings: triage, a diagnosis card per finding
+(diagnosis, vitals, prognosis, `Rx`), the Health Score (`100 − Σ penalty`, ADR-012)
+and the visit history in `~/.ctxmedic/history.json` (ADR-017).
+
+### Stage 3: CLI (reconstructed)
+
+1. `ctxmedic checkup [path]`: full examination with clinical cards in the terminal;
+   `--json` output validated against the Zod contracts (ADR-002); exit code 1 on
+   🔴 findings so it works as a CI gate.
+2. `ctxmedic treat RX-NN`: apply one prescription through the `FixEngine`
+   (`--all`, `--dry-run`, `--force`): backups, git-dirty check, no writes outside the
+   root (ADR-006). `ctxmedic restore` undoes a fix (ADR-016).
+3. `ctxmedic savings`: FinOps only. `ctxmedic history`: Health Score over time.
+4. `ctxmedic consult [--ai]`: the questionnaire from section 1 and the optional AI
+   consilium (Module A, item 7), which asks before sending anything and redacts
+   secrets (ADR-008, ADR-021, ADR-023).
+5. Stack: `commander` + `@clack/prompts` + `picocolors` (ADR-003).
+
+### Stage 4: local server and Web UI (reconstructed)
+
+1. `ctxmedic ui`: a Hono server on `127.0.0.1` that serves the built SPA from
+   `packages/cli/public` and a JSON API: `GET /api/checkup`, `/api/history`,
+   `/api/graph`, and `POST /api/treat/:rx`, which needs the per-run token (ADR-008).
+2. The SPA (React + Vite + Tailwind + Lucide + React Flow) has four tabs: dashboard
+   (Health Score and trend), diagnoses (cards with a treat button), FinOps, and a
+   config graph of instruction files, skills and symlinks.
+
+### Stage 5: release (reconstructed)
+
+1. Publish one npm package, `ctxmedic`, that bundles every internal package
+   (ADR-001); npm trusted publishing with provenance.
+2. Releases through release-please with a GitHub App token (ADR-022).
+3. A GitHub Action (`action.yml`) that runs `checkup` in CI, pinned to the CLI
+   released with the same commit (ADR-019).
+
+---
+
+# Spec vs build
+
+Every place where the build differs from the original text above.
+
+| Spec says | Build | Covered by |
+|---|---|---|
+| Local HTTP/**WebSocket** API server | HTTP only; the UI fetches on demand | ADR-003; live updates in #11 |
+| `FIN_BLOAT_IGNORE` in Module B (`packages/finops`) | A core rule in `packages/core/src/rules/` | ADR-024 |
+| Profiles of 6 harnesses | 7: Cline added (section 1 already lists it) | — |
+| Cursor session logs | Parsed, but Cursor transcripts carry no token usage, so Cursor gives step counts only | ADR-011 |
+| More languages through `--lang` | English only; the catalog seam stays | ADR-015 |
+| `FIN_UNUSED_MCP`: idle for 14/30 days | Idle within the analysis window: `--days`, 30 by default | — (14 days is `--days 14`) |
+| Team / Enterprise edition (seam only) | Seam only: rule and detector registries plus the JSON report | ADR-014; design in #13 |

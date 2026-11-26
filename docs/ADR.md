@@ -213,3 +213,13 @@ CLI names the model that answered. A `fallback` block in the stream drops the
 declined model's partial text, so the answer is printed only after the stream
 ends. With `CTXMEDIC_AI_MODEL` set, no fallback is requested, because the
 override model may not accept it.
+
+## ADR-024 FIN_BLOAT_IGNORE is a core rule
+The spec lists `FIN_BLOAT_IGNORE` under FinOps (Module B), but it reads no
+session logs: it checks whether ignore files (`.cursorignore` and the like)
+exclude lockfiles, `dist/` and build output. So it is a core rule
+(`packages/core/src/rules/bloatIgnore.ts`) that runs on every `checkup`,
+including `--no-finops`, and can fix itself through `applyFix` (it writes the
+ignore file). It keeps its `FIN_` id because the cost of indexing those files
+is what it reports.
+
