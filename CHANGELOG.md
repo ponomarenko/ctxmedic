@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/ponomarenko/ctxmedic/compare/v0.7.0...v0.8.0) (2026-11-26)
+
+
+### Features
+
+* **finops:** FIN_* detectors take options from ctxmedic.config.json ([#107](https://github.com/ponomarenko/ctxmedic/issues/107)) ([66ba301](https://github.com/ponomarenko/ctxmedic/commit/66ba301967a0bcddd31fd6e05a8093aa712d3c19))
+
 ## [0.7.0](https://github.com/ponomarenko/ctxmedic/compare/v0.6.0...v0.7.0) (2026-11-26)
 
 
