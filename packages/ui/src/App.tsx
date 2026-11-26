@@ -132,6 +132,15 @@ export function App() {
 
   useEffect(() => void load(true), []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => void (report && load()), [lang]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Live updates: the server sends `changed` after a config edit. No visit is recorded, so edits do not flood the trend.
+  useEffect(() => {
+    const events = new EventSource("/api/events");
+    events.addEventListener("changed", () => {
+      setGraph(null);
+      void load();
+    });
+    return () => events.close();
+  }, [load]);
   useEffect(() => void (tab === "graph" && !graph && api<ConfigGraph>("/api/graph").then(setGraph).catch((e) => setToast(e.message))), [tab, graph]);
 
   const onTreat = async (rx: string, dry: boolean) => {

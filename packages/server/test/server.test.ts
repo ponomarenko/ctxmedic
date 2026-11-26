@@ -63,3 +63,57 @@ describe("server", () => {
     expect((await treat("RX-99")).status).toBe(409);
   });
 });
+
+describe("live updates", () => {
+  /** Opens /api/events and returns a reader that resolves with the next event name, or null after `ms`. */
+  async function events() {
+    const ac = new AbortController();
+    const res = await app.request("/api/events", { signal: ac.signal });
+    expect(res.headers.get("content-type")).toContain("text/event-stream");
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    const next = async (ms: number): Promise<string | null> => {
+      const deadline = Date.now() + ms;
+      for (;;) {
+        const m = /event: (\w+)\n[^\n]*\n\n/.exec(buf);
+        if (m) {
+          buf = buf.slice(m.index + m[0].length);
+          if (m[1] !== "ping") return m[1]!;
+          continue;
+        }
+        const left = deadline - Date.now();
+        if (left <= 0) return null;
+        const chunk = await Promise.race([reader.read(), new Promise<null>((r) => setTimeout(() => r(null), left))]);
+        if (!chunk) return null;
+        if (chunk.done) return null;
+        buf += decoder.decode(chunk.value, { stream: true });
+      }
+    };
+    return { next, close: () => ac.abort() };
+  }
+
+  it("sends `changed` within 2 seconds after a config file is edited", async () => {
+    const es = await events();
+    try {
+      expect(await es.next(5000)).toBe("ready");
+      fs.appendFileSync(path.join(root, ".cursorrules"), "\nPrefer small functions.");
+      expect(await es.next(2000)).toBe("changed");
+    } finally {
+      es.close();
+    }
+  });
+
+  it("ignores ctxmedic's own writes", async () => {
+    const es = await events();
+    try {
+      expect(await es.next(5000)).toBe("ready");
+      fs.mkdirSync(path.join(root, ".ctxmedic", "backups"), { recursive: true });
+      fs.writeFileSync(path.join(root, ".ctxmedic", "backups", "manifest.json"), "{}");
+      fs.writeFileSync(path.join(root, "README.md"), "# not a config");
+      expect(await es.next(1000)).toBeNull();
+    } finally {
+      es.close();
+    }
+  });
+});

@@ -16,8 +16,16 @@ are validated against them.
 
 ## ADR-003 CLI and server stack
 `commander` + `@clack/prompts` + `picocolors`. Server: `hono` +
-`@hono/node-server`. **Shortcut:** no WebSocket in v0.1; the UI fetches on
-demand. Upgrade when the UI needs live updates (for example, a log watcher).
+`@hono/node-server`. Live updates use Server-Sent Events, not WebSocket:
+data only flows from the server to the UI. `GET /api/events` sends `changed`
+after a config edit; the UI then re-fetches the checkup and history without
+recording a visit. The server watches, without recursion, the folder of every
+scanned file plus the folder that holds skills, and counts an event only when
+a scanned file's mtime or size, or the list of skill folders, really changed
+(macOS replays recent events when a watch starts). Events within 300 ms are
+merged. Watchers run only while a UI is connected. Not watched: session logs
+(they change every second during a session) and new config files in folders
+that hold none yet; the refresh button picks those up.
 
 ## ADR-004 Token counting
 `js-tiktoken` with `cl100k_base` for every harness. Anthropic does not publish
