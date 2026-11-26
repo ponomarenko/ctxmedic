@@ -1,4 +1,4 @@
-import type { Finding, RuleId } from "@ctxmedic/core";
+import type { BuiltinRuleId, Finding } from "@ctxmedic/core";
 import { MCP_SCHEMA_TOKENS } from "@ctxmedic/finops";
 import { Lang, type Triage } from "./schema.js";
 
@@ -10,7 +10,9 @@ export interface CardText {
 
 /** Every user-facing string. A new language is one more `Messages` object; TypeScript enforces completeness (ADR-015). */
 export interface Messages {
-  cards: Record<RuleId, CardText>;
+  cards: Record<BuiltinRuleId, CardText>;
+  /** Card for a rule from outside ctxmedic that brings no card of its own (ADR-026). */
+  externalCard: { prognosis: (description: string) => string; action: (docs: string | undefined) => string };
   ui: {
     triage: Record<Triage, string>;
     labs: string;
@@ -141,6 +143,10 @@ const en: Messages = {
       prognosis: (f) => `Cache hit ratio ${pct(d(f, "cacheHitRatio"))}: you pay full price for context the provider could serve at ~10%.`,
       action: () => "Keep instructions static: no dates, branch names or random IDs at the top; avoid switching models mid-session.",
     },
+  },
+  externalCard: {
+    prognosis: (description) => `Reported by a rule from outside ctxmedic: ${description}.`,
+    action: (docs) => (docs ? `See the rule's docs: ${docs}` : "See the docs of the plugin that provides this rule."),
   },
   ui: {
     triage: { resuscitation: "🔴 Resuscitation", therapy: "🟡 Therapy", preventive: "🟢 Preventive" },

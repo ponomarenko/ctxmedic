@@ -1,7 +1,7 @@
-import { applyFix, configHash, examine, FixRefusedError, type Finding, type FinOpsReport, type FixOptions, type FixResult } from "@ctxmedic/core";
+import { applyFix, configHash, examine, FixRefusedError, type Finding, type Rule, type FinOpsReport, type FixOptions, type FixResult } from "@ctxmedic/core";
 import { analyze } from "@ctxmedic/finops";
 import { harnesses } from "@ctxmedic/harnesses";
-import { cards, t } from "./i18n.js";
+import { cards, messages, t, type CardText } from "./i18n.js";
 import { Anamnesis, ClinicalReport, type ClinicalDiagnosis, type Lang, type ScanSettings, type Triage } from "./schema.js";
 import { healthGain, healthScore } from "./score.js";
 import { loadAnamnesis, loadHistory, recordVisit } from "./store.js";
@@ -33,8 +33,16 @@ function vitals(f: Finding): { label: string; value: string }[] {
   return out;
 }
 
-export function diagnose(findings: Finding[], lang: Lang, anamnesis: Anamnesis = Anamnesis.parse({})): ClinicalDiagnosis[] {
-  const cat = cards(lang);
+export function diagnose(findings: Finding[], lang: Lang, anamnesis: Anamnesis = Anamnesis.parse({}), extraRules: Rule[] = []): ClinicalDiagnosis[] {
+  const cat: Record<string, CardText> = cards(lang);
+  // Built-in card, else the rule's own, else one built from its meta (ADR-026).
+  const cardFor = (f: Finding): CardText => {
+    if (cat[f.ruleId]) return cat[f.ruleId]!;
+    const meta = extraRules.find((r) => r.id === f.ruleId)?.meta;
+    if (meta?.card) return meta.card;
+    const ext = messages(lang).externalCard;
+    return { name: f.ruleId, prognosis: () => ext.prognosis(meta?.description ?? f.message), action: () => ext.action(meta?.docs) };
+  };
   const weight = (f: Finding) => {
     const gain = healthGain(findings, f);
     const usd = f.monthlySavingsUsd ?? 0;
@@ -46,7 +54,7 @@ export function diagnose(findings: Finding[], lang: Lang, anamnesis: Anamnesis =
   );
   return sorted.map((f, i) => {
     const id = `RX-${String(i + 1).padStart(2, "0")}`;
-    const card = cat[f.ruleId];
+    const card = cardFor(f);
     return {
       code: f.ruleId,
       triage: TRIAGE[f.severity],
@@ -77,6 +85,8 @@ export interface CheckupOptions {
   global?: boolean;
   /** Save this visit to history. Default true. */
   record?: boolean;
+  /** Rules from outside ctxmedic (namespaced ids, ADR-026). */
+  extraRules?: Rule[];
 }
 
 /** The flags of a checkup that change its score, with the same defaults `checkup` uses. */
@@ -88,11 +98,11 @@ export const scanSettings = (opts: Pick<CheckupOptions, "global" | "finops" | "d
 });
 
 export async function checkup(opts: CheckupOptions): Promise<ClinicalReport> {
-  const ex = await examine(opts.root, harnesses, { global: opts.global });
+  const ex = await examine(opts.root, harnesses, { global: opts.global, extraRules: opts.extraRules });
   let finops: FinOpsReport | null = null;
   if (opts.finops !== false) finops = await analyze({ root: ex.vitals.root, files: ex.files, days: opts.days ?? 30, config: ex.config });
   const findings = [...ex.findings, ...(finops?.findings ?? [])];
-  const diagnoses = diagnose(findings, opts.lang, loadAnamnesis());
+  const diagnoses = diagnose(findings, opts.lang, loadAnamnesis(), opts.extraRules);
   const score = healthScore(findings);
   const counts = { resuscitation: 0, therapy: 0, preventive: 0 };
   for (const d of diagnoses) counts[d.triage]++;

@@ -4,8 +4,8 @@ import path from "node:path";
 import picomatch from "picomatch";
 import { z } from "zod";
 import { PRESET_NAMES, PRESETS } from "./presets.js";
-import { allRuleMeta } from "./rules/index.js";
-import { RuleId, Severity, type Finding, type ScannedFile } from "./schema.js";
+import { allRuleMeta, type Rule } from "./rules/index.js";
+import { EXTERNAL_RULE_ID, RuleId, Severity, type Finding, type ScannedFile } from "./schema.js";
 
 export const CONFIG_FILE = "ctxmedic.config.json";
 
@@ -69,8 +69,8 @@ export const RuleInfo = z.object({
 export type RuleInfo = z.infer<typeof RuleInfo>;
 
 /** Every rule and FIN_* detector with its effective level and options under `config`. */
-export function describeRules(config: CtxmedicConfig): RuleInfo[] {
-  return allRuleMeta().map(([id, meta, source]) => {
+export function describeRules(config: CtxmedicConfig, extraRules: Rule[] = []): RuleInfo[] {
+  return allRuleMeta(extraRules).map(([id, meta, source]) => {
     const entry = config.rules[id];
     const options = (meta.options?.parse(optionsOf(entry)) ?? {}) as Record<string, unknown>;
     const defaults = (meta.options?.parse({}) ?? {}) as Record<string, unknown>;
@@ -102,11 +102,20 @@ export function configJsonSchema(): Record<string, unknown> {
     ignores: note(z.array(z.string()), { description: "Globs over finding paths (project-relative, or ~/ for global files)." }).optional(),
   });
   // draft-7: the widest editor support (VS Code included).
-  return z.toJSONSchema(editorConfig, { io: "input", target: "draft-7", unrepresentable: "any", metadata: reg }) as Record<string, unknown>;
+  const json = z.toJSONSchema(editorConfig, { io: "input", target: "draft-7", unrepresentable: "any", metadata: reg }) as any;
+  // Namespaced ids (plugin rules, ADR-026) are allowed with any options; built-in ids keep their own entries.
+  const levelRef = { $ref: "#/definitions/RuleLevel" };
+  json.properties.rules.patternProperties = {
+    [EXTERNAL_RULE_ID.source]: {
+      description: "A rule from a plugin: plugin/RULE_NAME.",
+      anyOf: [levelRef, { type: "array", items: [levelRef], minItems: 1, maxItems: 1 }, { type: "array", items: [levelRef, { type: "object" }], minItems: 2, maxItems: 2 }],
+    },
+  };
+  return json as Record<string, unknown>;
 }
 
 /** Reads `ctxmedic.config.json` in the root; no file means an empty config. Invalid config throws, it never falls back silently. */
-export function loadConfig(root: string): CtxmedicConfig {
+export function loadConfig(root: string, extraRules: Rule[] = []): CtxmedicConfig {
   const file = path.join(root, CONFIG_FILE);
   if (!fs.existsSync(file)) return CtxmedicConfig.parse({});
   let raw: unknown;
@@ -121,7 +130,10 @@ export function loadConfig(root: string): CtxmedicConfig {
   for (const [id, entry] of Object.entries(config.rules)) {
     const opts = optionsOf(entry);
     if (!Object.keys(opts).length) continue;
-    const schema = allRuleMeta().find(([x]) => x === id)?.[1].options;
+    const known = allRuleMeta(extraRules).find(([x]) => x === id);
+    // A namespaced rule may come from a plugin that is not loaded: its level is kept, but options cannot be checked.
+    if (!known && id.includes("/")) throw new ConfigError(`${CONFIG_FILE}: rule ${id} is not loaded, so its options cannot be checked`);
+    const schema = known?.[1].options;
     if (!schema) throw new ConfigError(`${CONFIG_FILE}: rule ${id} takes no options`);
     const o = schema.safeParse(opts);
     if (!o.success) throw new ConfigError(`${CONFIG_FILE}: rule ${id}: ${z.prettifyError(o.error)}`);

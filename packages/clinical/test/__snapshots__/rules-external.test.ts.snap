@@ -1,0 +1,27 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`built-in rules > keep the same diagnoses as before namespaced ids 1`] = `
+[
+  [
+    "WARN_CONTEXT_BLOAT",
+    "Context Obesity",
+    "5,404 tokens ride along with every request. Rules in the middle get "lost in the middle", attention drifts and the bill grows with each turn.",
+    "Move rarely-needed sections into skills or path-scoped rules; keep the always-on core under 3,500 tokens.",
+    8,
+  ],
+  [
+    "INFO_UNSUPPORTED_SYNTAX",
+    "Cross-Harness Allergy",
+    "codex reads @import as plain text: noise at best, wrong instructions at worst.",
+    "Move tool-specific directives into that tool's own file, or keep shared files directive-free.",
+    2,
+  ],
+  [
+    "INFO_UNSUPPORTED_SYNTAX",
+    "Cross-Harness Allergy",
+    "opencode reads @import as plain text: noise at best, wrong instructions at worst.",
+    "Move tool-specific directives into that tool's own file, or keep shared files directive-free.",
+    2,
+  ],
+]
+`;

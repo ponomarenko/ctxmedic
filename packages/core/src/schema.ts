@@ -3,7 +3,8 @@ import { z } from "zod";
 export const Severity = z.enum(["critical", "warning", "info"]);
 export type Severity = z.infer<typeof Severity>;
 
-export const RuleId = z.enum([
+/** Rules that ship with ctxmedic. */
+export const BuiltinRuleId = z.enum([
   "ERR_BROKEN_LINK",
   "WARN_CONTEXT_BLOAT",
   "WARN_DUPLICATE_RULES",
@@ -17,7 +18,16 @@ export const RuleId = z.enum([
   "FIN_CONTEXT_SNOWBALL",
   "FIN_CACHE_MISS",
 ]);
-export type RuleId = z.infer<typeof RuleId>;
+export type BuiltinRuleId = z.infer<typeof BuiltinRuleId>;
+
+/** Rules from elsewhere (plugins) carry a namespace: `plugin/RULE_NAME` (ADR-026). */
+export const EXTERNAL_RULE_ID = /^[a-z][a-z0-9-]*\/[A-Z][A-Z0-9_]*$/;
+export const ExternalRuleId = z
+  .string()
+  .regex(EXTERNAL_RULE_ID, "external rule ids look like plugin/RULE_NAME")
+  .transform((s) => s as `${string}/${string}`);
+export const RuleId = z.union([BuiltinRuleId, ExternalRuleId]);
+export type RuleId = BuiltinRuleId | `${string}/${string}`;
 
 export const FixOp = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("write"), path: z.string(), content: z.string() }),

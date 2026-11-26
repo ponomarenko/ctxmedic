@@ -512,7 +512,40 @@
         }
       },
       "additionalProperties": false,
-      "description": "Rule levels and options: \"off\", \"on\", a severity, or [level, options]."
+      "description": "Rule levels and options: \"off\", \"on\", a severity, or [level, options].",
+      "patternProperties": {
+        "^[a-z][a-z0-9-]*\\/[A-Z][A-Z0-9_]*$": {
+          "description": "A rule from a plugin: plugin/RULE_NAME.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleLevel"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                }
+              ],
+              "minItems": 1,
+              "maxItems": 1
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/RuleLevel"
+                },
+                {
+                  "type": "object"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        }
+      }
     },
     "ignores": {
       "type": "array",
