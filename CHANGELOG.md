@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.0](https://github.com/ponomarenko/ctxmedic/compare/v0.11.0...v0.12.0) (2026-11-26)
+
+
+### Features
+
+* **core:** load rules from npm plugins, opt-in per run ([#118](https://github.com/ponomarenko/ctxmedic/issues/118)) ([2d7c352](https://github.com/ponomarenko/ctxmedic/commit/2d7c352520e0793ec564532ddd5abf9e9d8e88b1))
+* **core:** namespaced rule ids for external rules ([#116](https://github.com/ponomarenko/ctxmedic/issues/116)) ([5ebcdc8](https://github.com/ponomarenko/ctxmedic/commit/5ebcdc8ebb619c9c865f45e4c96a4bed8dab62a1))
+
 ## [0.11.0](https://github.com/ponomarenko/ctxmedic/compare/v0.10.0...v0.11.0) (2026-11-26)
 
 
